@@ -1,32 +1,119 @@
-# React + TypeScript + Vite
+# Hypotheca Web Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Frontend for **Hypotheca**, the on-chain encumbrance enforcement layer for tokenized assets. This dashboard visualizes asset encumbrances, available balances, live claim events, and over-pledge rejections.
 
-Currently, two official plugins are available:
+Built with **React 18 + Vite + TypeScript + TailwindCSS v4**.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Landing page** — full animated marketing site (mesh gradients, logo marquee, glassmorphism, scroll-reveal animations).
+- **Dashboard** — KPI cards (total held, active claims, available balance) and a live event stream.
+- **Assets** — list of tokenized assets with their encumbrance breakdown.
+- **Claims** — full claims table (active / released / defaulted) with encumbrance bars.
+- **Create Claim** — form to pledge a new claim against an asset.
+- **History** — audit view of all claim lifecycle events.
+- **Rejection modal** — highlights on-chain over-pledge rejections (the core demo moment).
 
-## Expanding the Oxlint configuration
+> **Note:** All data is currently mock data (`src/data/mock.ts`). Contract and Mirror Node wiring is planned.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+---
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+## Tech Stack
+
+- **React 18** + **Vite**
+- **TypeScript**
+- **TailwindCSS v4**
+- **Framer Motion** — animation
+- **tsparticles** — particle backgrounds
+- **lottie-react** — Lottie animations
+- **lucide-react** / **@phosphor-icons/react** — icons
+- **oxlint** — linting
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+
+### Install
+
+```bash
+npm install
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+### Development Server
+
+```bash
+npm run dev
+```
+
+Serves with hot module replacement at `http://localhost:5173`.
+
+### Production Build
+
+```bash
+npm run build
+```
+
+Output is written to `dist/`.
+
+### Lint
+
+```bash
+npm run lint
+```
+
+### Preview the Production Build
+
+```bash
+npm run preview
+```
+
+---
+
+## Serving the Static Build
+
+A minimal static server is included for hosting the built app on a fixed port:
+
+```bash
+node server.cjs
+```
+
+Serves `dist/` at `http://localhost:4173`. On Windows you can also run `start.bat`.
+
+---
+
+## Project Structure
+
+```
+apps/web
+├── public/                 # Static assets (backgrounds, coins, audio)
+├── src/
+│   ├── assets/             # Images / svg assets
+│   ├── components/         # UI components (Sidebar, Header, KPICard, ...)
+│   ├── data/               # Mock data
+│   ├── lib/                # Utilities & hooks (sound, counters, typing)
+│   ├── pages/              # Route views (Dashboard, Claims, ...)
+│   ├── App.tsx             # App shell & routing
+│   ├── main.tsx            # Entry point
+│   └── index.css           # Design system & animations
+├── server.cjs              # Static preview server
+├── start.bat               # Windows start script
+├── vite.config.ts
+└── package.json
+```
+
+---
+
+## Available Scripts
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start development server with HMR |
+| `npm run build` | Type-check and build for production |
+| `npm run lint` | Run oxlint |
+| `npm run preview` | Preview the production build |
