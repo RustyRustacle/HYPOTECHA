@@ -28,7 +28,7 @@ export function Sidebar({ activePage, onNavigate }: SidebarProps) {
     <aside className="w-60 border-r border-border/50 bg-surface/80 backdrop-blur-xl flex flex-col min-h-screen shrink-0">
       <div className="p-5 border-b border-border/50">
         <button onClick={() => onNavigate('dashboard')} className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-bold text-sm">H</div>
+          <img src="/logo.png" alt="Hypotheca" className="w-8 h-8 rounded-lg object-cover" />
           <span className="font-semibold text-text text-base tracking-tight">HYPOTECHA</span>
         </button>
       </div>

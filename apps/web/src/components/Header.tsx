@@ -14,7 +14,7 @@ export function Header({ onConnectWallet, connected, onBackToLanding }: HeaderPr
           onClick={onBackToLanding}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
-          <div className="w-6 h-6 rounded-md bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-bold text-[10px]">H</div>
+          <img src="/logo.png" alt="Hypotheca" className="w-6 h-6 rounded-md object-cover" />
           <span className="font-semibold text-text text-sm tracking-tight">HYPOTECHA</span>
         </button>
         <span className="text-border/50 mx-1">|</span>
