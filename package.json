@@ -1,0 +1,19 @@
+{
+  "name": "hypotheca",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "services/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace apps/web run dev",
+    "dev:api": "npm --workspace apps/api run dev",
+    "dev:indexer": "npm --workspace services/indexer run dev",
+    "build:web": "npm --workspace apps/web run build",
+    "build:contracts": "npm --workspace @hypotheca/contracts run build",
+    "test:contracts": "npm --workspace @hypotheca/contracts run test",
+    "deploy:testnet": "npm --workspace @hypotheca/contracts run deploy:testnet"
+  }
+}
