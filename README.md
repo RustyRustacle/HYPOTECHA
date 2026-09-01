@@ -1,167 +1,233 @@
 # HYPOTECHA
 
-**On-chain encumbrance enforcement layer for tokenized assets.**
+Hypotheca is an on-chain encumbrance enforcement layer for tokenized assets. It records and enforces partial claims or collateral against an asset's available balance so a single tokenized position cannot be pledged beyond its real value.
 
-Hypotheca records and enforces encumbrances — partial claims or collateral on an asset's value — to prevent **double-pledging**, the situation where a single asset is pledged for more than it is worth to more than one party.
+The project is designed for Hedera Asset Tokenization Studio (ATS) and is structured to support a complete RWA workflow: issuance, encumbrance creation, automated rejection of over-pledging, claim release, and historical auditability.
 
-Built for the ETHGlobal Hedera Bounty Track *"Tokenization of Anything"*.
+## Why Hypotheca exists
 
----
+The core problem in tokenized finance is not ownership alone — it is enforceable collateral state. A token may be owned by one entity while also being silently pledged to multiple counterparties. Without a shared, queryable, and enforceable source of truth, double-pledging becomes a systemic risk.
 
-## Problem
+Hypotheca solves this by making available balance a first-class on-chain fact:
 
-Tokenization removes the friction of asset ownership, but it also removes the guardrails. Without a shared source of truth, the same tokenized asset can be pledged as collateral to multiple lenders simultaneously, and no single party sees the full picture until a default happens.
+- total balance of an asset
+- total active encumbrances
+- available balance available for new claims
+- rejection of any request that exceeds residual capacity
 
-**Hypotheca solves this by making the available (unencumbered) balance of any asset a first-class, queryable, and enforceable on-chain fact.**
+This creates a clean enforcement layer for use cases such as repo financing, securities lending, trade finance, and collateral management.
 
----
+## Product vision
 
-## What It Does
+Hypotheca provides:
 
-- **Create claims** — a lender records a claim against a portion of an obligor's asset balance.
-- **Prevent over-pledging** — the protocol rejects any claim that would push total encumbrance beyond what the obligor actually holds.
-- **Release claims** — a claim is released, restoring the obligor's available balance.
-- **Default management** — an admin can mark a claim as defaulted.
-- **Full audit trail** — every claim lifecycle event is recorded on-chain and queryable.
+- claim lifecycle tracking for tokenized collateral
+- rejection of over-pledging at the contract level
+- explicit encumbrance state across obligors and claimants
+- transparent audit history for lenders, issuers, and regulators
+- a real-time dashboard for issuance and collateral status monitoring
 
----
+## Repository structure
 
-## Architecture
-
-A **standalone external Diamond Facet** (EIP-2535) — deliberately *not* a fork of the ATS monorepo. Hypotheca adds a single logic layer on top of existing Asset Tokenization Studio tokens via `@hashgraph/asset-tokenization-sdk`, rather than taking ownership of the tokens themselves.
-
-```
-HYPOTECHA
+```text
+HYPOTECHA/
 ├── apps/
-│   └── web/                 # React dashboard (Vite + TailwindCSS)
-├── packages/                # (planned)
-│   ├── contracts/           # EncumbranceFacet — standalone Diamond
-│   └── sdk/                 # TypeScript SDK wrapper over ATS SDK
-├── scripts/                 # (planned) deploy & demo tooling
-└── test/                    # (planned) integration tests
+│   ├── api/                 # Express API layer for orchestration and integration
+│   └── web/                # React + Vite landing page and dashboard
+├── packages/
+│   ├── contracts/          # Solidity + Hardhat smart contract package
+│   └── sdk/                # TypeScript SDK for contract interaction
+├── services/
+│   └── indexer/            # Mirror Node / event indexing service scaffold
+├── scripts/                # deployment and verification utilities
+├── test/                   # integration and E2E test plans
+├── .env.example            # environment variables template
+├── .gitignore
+├── package.json            # workspaces and root commands
+├── README.md
+└── LICENSE                 # if added later
 ```
 
-### On-Chain Design
+## System architecture
 
-The core contract, `EncumbranceFacet.sol`, uses a namespaced storage layout (ERC-7201) and exposes a carefully scoped surface.
+```text
+User / Issuer / Lender
+        │
+        ▼
+React frontend (apps/web)
+        │
+        ▼
+API layer (apps/api)
+        │
+        ▼
+Hypotheca SDK (packages/sdk)
+        │
+        ▼
+Hypotheca contract layer (packages/contracts)
+        │
+        ├── ATS token base / identity layer
+        ├── claim registry / available balance guard
+        └── event and audit trail
+```
 
-| Function | Access | Purpose |
-| --- | --- | --- |
-| `initialize()` | Admin | One-time initialization |
-| `createClaim(token, obligor, claimant, amount)` | Verified participant | Record a claim against available balance |
-| `releaseClaim(claimId)` | Claimant / Admin | Release a claim, restore available balance |
-| `defaultClaim(claimId)` | Admin | Mark a claim as defaulted |
-| `getAvailableBalance(token, obligor)` | View | Remaining encumberable balance |
-| `getActiveClaims(token, obligor)` | View | Active claims on an asset |
-| `getTotalHeld(token, obligor)` | View | Total encumbered value |
-| `getClaimHistory(token, obligor)` | View | Full audit history |
+### Core contract concepts
 
-The guard check that prevents over-pledging enforces the invariant `balance >= totalHeld + amount` before any claim is accepted.
+- `createClaim(...)`: records a claim against an obligor's available balance
+- `releaseClaim(...)`: releases a claim and restores available balance
+- `defaultClaim(...)`: marks a claim as defaulted by authorized admin flow
+- `getAvailableBalance(...)`: returns the remaining unencumbered amount
+- `getClaims(...)`: returns active claim history for a token / obligor pair
 
----
+## Current implementation status
 
-## Project Status
+The repository currently contains a working frontend prototype and the foundational monorepo scaffolding for the full production stack.
 
-> **Note:** This reflects the live state of the repository as of **2026-08-26**.
+Status by layer:
 
-### Done
+- Frontend dashboard: implemented and buildable
+- API scaffold: implemented
+- Smart contract scaffold: implemented
+- SDK scaffold: implemented
+- Indexer scaffold: implemented
+- Production integration with live Hedera testnet: in progress
+- Final contract logic and deployment flow: pending production hardening
 
-- **Frontend dashboard** — fully built (React 18 + Vite + TailwindCSS v4).
-  - 6 pages: Landing, Dashboard, Assets, Claims, CreateClaim, History.
-  - 7 components: Sidebar, Header, KPICard, EncumbranceBar, ClaimsTable, EventLog, RejectionModal.
-  - Landing page with a complete animated design system (mesh gradients, marquee, glassmorphism, scroll-triggered reveals).
-  - Production build passes (`npm run build`).
-  - Static preview server (`server.cjs`) serving on port `4173`.
+## Prerequisites
 
-### In Progress
-
-- Frontend-to-contract wiring (currently all mock data in `src/data/mock.ts`).
-
-### Not Started
-
-- `EncumbranceFacet.sol` smart contract.
-- TypeScript SDK wrapper (`@hypotheca/sdk`).
-- Wallet integration (HashPack / WalletConnect).
-- Mirror Node event listener.
-- Tests and deployment scripts.
-
----
-
-## Getting Started
-
-### Prerequisites
+Before running the project locally, ensure the following are installed:
 
 - Node.js 20+
-- Package manager of your choice (`npm`, `pnpm`, `bun`)
+- npm 10+
+- Git
+- Optional: Hardhat-compatible local tooling for contract work
 
-### Run the Frontend Dashboard
+## Local setup
+
+1. Clone the repository
 
 ```bash
-cd apps/web
+git clone https://github.com/RustyRustacle/HYPOTECHA.git
+cd HYPOTECHA
+```
+
+2. Install dependencies
+
+```bash
 npm install
-npm run dev
 ```
 
-Visit `http://localhost:5173`.
-
-### Build for Production
+3. Copy the environment template
 
 ```bash
-cd apps/web
-npm run build
+cp .env.example .env
 ```
 
-### Serve the Production Build
+Then fill in the required values, especially:
+
+```env
+HEDERA_TESTNET_RPC_URL=https://testnet.hashio.io/api
+PRIVATE_KEY=your_private_key_here
+ACCOUNT_ID=0.0.1234567
+PORT=4000
+NODE_ENV=development
+```
+
+## Run the project
+
+### Frontend
 
 ```bash
-node server.cjs
+npm run dev:web
 ```
 
-Serves the static build at `http://localhost:4173`.
+### API
 
----
+```bash
+npm run dev:api
+```
+
+### Contract build and tests
+
+```bash
+npm run build:contracts
+npm run test:contracts
+```
+
+### Indexer
+
+```bash
+npm run dev:indexer
+```
+
+## Workspace scripts
+
+The root `package.json` includes the main commands:
+
+```bash
+npm run dev:web
+npm run dev:api
+npm run dev:indexer
+npm run build:web
+npm run build:contracts
+npm run test:contracts
+npm run deploy:testnet
+```
+
+## Development principles
+
+This project follows a simple engineering approach:
+
+- keep the contract logic explicit and auditable
+- separate protocol logic from UI concerns
+- make interface contracts stable before wallet integration
+- prioritize event traceability and claim lifecycle correctness over cosmetic polish
+- keep local app builds portable across environments via `.env`-driven setup
 
 ## Roadmap
 
-1. **Smart contracts** — implement and test `EncumbranceFacet.sol`.
-2. **Deployment** — deploy to Hedera testnet and verify on HashScan.
-3. **SDK** — ship `@hypotheca/sdk` wrapping the ATS SDK with encumbrance methods.
-4. **Wallet & Mirror Node** — connect the dashboard to real contracts and stream live events.
-5. **End-to-end** — demo flow: issue → pledge → reject over-pledge → repay → release.
-6. **Submission package** — demo video, docs, and ETHGlobal deliverable checklist.
+### Phase 1: Foundations
+- finalize contract states and lifecycle rules
+- complete SDK integration contracts
+- finalize API schema and validation
 
----
+### Phase 2: Live network integration
+- deploy on Hedera testnet
+- verify contracts on HashScan
+- connect UI to real contract calls
 
-## Testing Strategy
+### Phase 3: Trust and auditability
+- add claim history indexing and event queries
+- verify reject-over-pledge flows in production-like conditions
+- add admin/release/default handling and validation
 
-- **Smart contracts** — Hardhat + Mocha/Chai, covering claim lifecycle, over-pledge boundaries, access control, and event emission.
-- **SDK** — unit tests for wrapper methods plus integration tests against Hedera testnet.
-- **Frontend** — Vitest + React Testing Library for components, Playwright for E2E flows.
+### Phase 4: Demo and submission
+- create 5-minute demo flow
+- finalize dashboard UX and data storytelling
+- produce submission-grade documentation and video walkthrough
 
----
+## Security and correctness notes
 
-## Tech Stack
+This is still an evolving implementation. The current repository is best treated as a structured engineering scaffold for a production-grade collateral enforcement protocol. The eventual contract layer should be reviewed for:
 
-| Layer | Technology |
-| --- | --- |
-| Smart contracts | Solidity, Hardhat, EIP-2535 Diamond facets, ERC-7201 storage |
-| SDK | TypeScript, `@hashgraph/asset-tokenization-sdk`, `ethers` v6 |
-| Frontend | React 18, Vite, TypeScript, TailwindCSS, Framer Motion, tsparticles, lottie-react |
-| Chain | Hedera testnet |
+- access control
+- claim validation edge cases
+- balance consistency across token and claim state
+- default/release semantics
+- event-driven data integrity for dashboard consumption
 
----
+## Contributing
 
-## Key References
+Contributions are welcome as long as they preserve the protocol's correctness and product scope. Before merging any substantive change:
 
-- [Asset Tokenization Studio](https://github.com/hashgraph/asset-tokenization-studio)
-- [ATS SDK on npm](https://www.npmjs.com/package/@hashgraph/asset-tokenization-sdk)
-- [Hedera Documentation](https://docs.hedera.com/)
-- [Hedera Testnet RPC](https://testnet.hashio.io/api)
-- [Hedera Mirror Node (testnet)](https://testnet.mirrornode.hedera.com/api/v1/)
-- [HashScan (testnet)](https://hashscan.io/testnet/)
-
----
+- validate the contract package
+- validate the SDK and API build
+- confirm frontend compatibility
+- document changes that affect the contract or workflow semantics
 
 ## License
 
-Proprietary — work in progress for ETHGlobal. © 2026 Hypotheca.
+Repository code is currently under active development. License terms should be finalized before public release or external production deployment.
+
+## Summary
+
+Hypotheca is designed to make encumbrance state enforceable, transparent, and verifiable. The current repository is a strong engineering base for the full solution: frontend, API, SDK, contract scaffold, and deployment preparation aligned with the Hedera ATS ecosystem.

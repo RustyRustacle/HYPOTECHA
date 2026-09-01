@@ -219,7 +219,7 @@ export function Landing({ onLaunchApp }: LandingProps) {
 
       {/* HERO */}
       <section ref={heroRef} className="relative pt-28 pb-16 px-6 overflow-hidden min-h-screen">
-        <SectionBackground kind="video" src="/bg/plexus.mp4" opacity={70} overlay="linear-gradient(to bottom, rgba(4,6,13,0.55), rgba(4,6,13,0.42) 45%, rgba(4,6,13,0.75))" />
+        <SectionBackground kind="video" src="/bg/hero-main.mp4" opacity={70} overlay="linear-gradient(to bottom, rgba(4,6,13,0.55), rgba(4,6,13,0.42) 45%, rgba(4,6,13,0.75))" />
 
         {/* Floating crypto coins */}
         <FloatingCoins />
