@@ -30,8 +30,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
   return (
     <div className="space-y-6">
-      <PageHero
-        badge="Overview · Encumbrance OS"
+      <div className="-mt-6">
+        <PageHero
+          badge="Overview · Encumbrance OS"
         title="On-Chain"
         accent="Oversight"
         subtitle="Live encumbrance state across every tokenized asset — what is held, what is free, and who holds it."
@@ -46,6 +47,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           </button>
         }
       />
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <KPICard
