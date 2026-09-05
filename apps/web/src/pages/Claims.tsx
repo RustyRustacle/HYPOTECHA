@@ -6,8 +6,9 @@ import { mockAllClaims } from '@/data/mock'
 export function Claims() {
   return (
     <div className="space-y-6">
-      <PageHero
-        badge="Registry · Claims"
+      <div className="-mt-6">
+        <PageHero
+          badge="Registry · Claims"
         title="Every"
         accent="Claim"
         subtitle="The shared, on-chain record of every encumbrance across all assets, obligors, and claimants."
@@ -19,6 +20,7 @@ export function Claims() {
           </div>
         }
       />
+      </div>
       <ClaimsTable claims={mockAllClaims} onRelease={(id) => console.log('Release', id)} />
     </div>
   )
