@@ -16,6 +16,7 @@ export interface TokenAsset {
   address: string
   name: string
   symbol: string
+  img?: string
   totalBalance: number
   totalHeld: number
   availableBalance: number
@@ -38,6 +39,7 @@ export const mockAssets: TokenAsset[] = [
     address: '0x0000000000000000000000000000000000001234',
     name: 'US Treasury Bond #123',
     symbol: 'UST-123',
+    img: '/asset/ust-123.jpg',
     totalBalance: 1000000,
     totalHeld: 600000,
     availableBalance: 400000,
@@ -61,6 +63,7 @@ export const mockAssets: TokenAsset[] = [
     address: '0x0000000000000000000000000000000000005678',
     name: 'Tokenized Corporate Bond',
     symbol: 'TCB-456',
+    img: '/asset/tcb-456.jpg',
     totalBalance: 500000,
     totalHeld: 200000,
     availableBalance: 300000,
@@ -84,10 +87,59 @@ export const mockAssets: TokenAsset[] = [
     address: '0x0000000000000000000000000000000000009ABC',
     name: 'Real Estate Fund Token',
     symbol: 'REFT-789',
+    img: '/asset/reft-789.jpg',
     totalBalance: 2500000,
     totalHeld: 0,
     availableBalance: 2500000,
     claims: [],
+  },
+  {
+    address: '0x000000000000000000000000000000000000DEAD',
+    name: 'Gold Bullion Token',
+    symbol: 'GLD-552',
+    img: '/asset/gld-552.jpg',
+    totalBalance: 800000,
+    totalHeld: 300000,
+    availableBalance: 500000,
+    claims: [
+      {
+        claimId: '0x0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e',
+        token: '0x000000000000000000000000000000000000DEAD',
+        tokenName: 'GLD-552',
+        obligor: '0x0000000000000000000000000000000000001111',
+        obligorName: 'Aurum Holdings',
+        claimant: '0x000000000000000000000000000000000000EEEE',
+        claimantName: 'Bank E',
+        amount: 300000,
+        status: 'Active',
+        createdAt: Date.now() / 1000 - 21600,
+        txHash: '0xgold123...',
+      },
+    ],
+  },
+  {
+    address: '0x000000000000000000000000000000000000BEEF',
+    name: 'Trade Finance Cargo Token',
+    symbol: 'CRG-014',
+    img: '/asset/cargo.jpg',
+    totalBalance: 1200000,
+    totalHeld: 450000,
+    availableBalance: 750000,
+    claims: [
+      {
+        claimId: '0x1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2',
+        token: '0x000000000000000000000000000000000000BEEF',
+        tokenName: 'CRG-014',
+        obligor: '0x0000000000000000000000000000000000002222',
+        obligorName: 'Maritime Co.',
+        claimant: '0x000000000000000000000000000000000000FFFF',
+        claimantName: 'Port Lending',
+        amount: 450000,
+        status: 'Active',
+        createdAt: Date.now() / 1000 - 7200,
+        txHash: '0xcargo456...',
+      },
+    ],
   },
 ]
 
@@ -131,6 +183,32 @@ export const mockAllClaims: EncumbranceClaim[] = [
     createdAt: Date.now() / 1000 - 172800,
     txHash: '0xghi789...',
   },
+  {
+    claimId: '0x0d1e2f3a...',
+    token: '0x...DEAD',
+    tokenName: 'GLD-552',
+    obligor: '0x...1111',
+    obligorName: 'Aurum Holdings',
+    claimant: '0x...EEEE',
+    claimantName: 'Bank E',
+    amount: 300000,
+    status: 'Active',
+    createdAt: Date.now() / 1000 - 21600,
+    txHash: '0xgold123...',
+  },
+  {
+    claimId: '0x1f2a3b4c...',
+    token: '0x...BEEF',
+    tokenName: 'CRG-014',
+    obligor: '0x...2222',
+    obligorName: 'Maritime Co.',
+    claimant: '0x...FFFF',
+    claimantName: 'Port Lending',
+    amount: 450000,
+    status: 'Active',
+    createdAt: Date.now() / 1000 - 7200,
+    txHash: '0xcargo456...',
+  },
 ]
 
 export const mockEvents: LiveEvent[] = [
@@ -170,5 +248,14 @@ export const mockEvents: LiveEvent[] = [
     amount: 150000,
     timestamp: Date.now() / 1000 - 10,
     txHash: '0x901stu234vwx',
+  },
+  {
+    id: '5',
+    type: 'EncumbranceCreated',
+    tokenName: 'GLD-552',
+    claimantName: 'Bank E',
+    amount: 300000,
+    timestamp: Date.now() / 1000 - 5,
+    txHash: '0xgold123456',
   },
 ]
