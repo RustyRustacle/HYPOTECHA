@@ -1,33 +1,48 @@
+import { Activity } from 'lucide-react'
 import { EventLog } from '@/components/EventLog'
 import { PageHero } from '@/components/PageHero'
 import { mockEvents } from '@/data/mock'
 
+const legend = [
+  { label: 'EncumbranceCreated', dot: 'bg-primary', cls: 'text-primary border-primary/25 bg-primary/10' },
+  { label: 'EncumbranceReleased', dot: 'bg-info-light', cls: 'text-info border-info/25 bg-info/10' },
+  { label: 'EncumbranceRejected', dot: 'bg-danger', cls: 'text-danger border-danger/25 bg-danger/10' },
+  { label: 'EncumbranceDefaulted', dot: 'bg-warning-light', cls: 'text-warning border-warning-light/25 bg-warning/10' },
+]
+
 export function History() {
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 max-w-5xl">
       <PageHero
-        badge="Audit"
-        title="Transaction History"
-        subtitle="Complete audit trail of all encumbrance events from Hedera Mirror Node"
-        media={{ kind: 'video', src: '/bg/vortex.mp4', opacity: 50 }}
+        badge="Audit · Mirror Node"
+        title="Transaction"
+        accent="History"
+        subtitle="The immutable audit trail of every encumbrance event, streamed from the Hedera Mirror Node."
+        media={{ kind: 'video', src: '/app-bg/history.mp4', opacity: 46 }}
+        actions={
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full liquid-glass text-xs">
+            <Activity className="w-3.5 h-3.5 text-primary" />
+            <span className="font-mono text-text-secondary">{mockEvents.length} events</span>
+          </div>
+        }
       />
 
-      <div className="flex items-center gap-3 mb-4">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-xs text-primary">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary" /> EncumbranceCreated
-        </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-info/10 border border-info/30 text-xs text-info">
-          <span className="w-1.5 h-1.5 rounded-full bg-info" /> EncumbranceReleased
-        </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-danger/10 border border-danger/30 text-xs text-danger">
-          <span className="w-1.5 h-1.5 rounded-full bg-danger" /> EncumbranceRejected
-        </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-warning/10 border border-warning/30 text-xs text-warning">
-          <span className="w-1.5 h-1.5 rounded-full bg-warning" /> EncumbranceDefaulted
-        </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {legend.map((item) => (
+          <span
+            key={item.label}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border ${item.cls}`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${item.dot}`} />
+            {item.label}
+          </span>
+        ))}
+        <span className="ml-auto text-[10px] uppercase tracking-[0.2em] text-text-muted font-mono">
+          source · testnet.mirrornode.hedera.com
+        </span>
       </div>
 
-      <EventLog events={mockEvents} />
+      <EventLog events={mockEvents} maxHeight="max-h-[560px]" />
     </div>
   )
 }

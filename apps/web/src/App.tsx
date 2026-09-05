@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Landing } from '@/pages/Landing'
 import { Sidebar } from '@/components/Sidebar'
@@ -23,22 +23,45 @@ const shellVariants = {
   exit: { opacity: 0, scale: 1.01, transition: { duration: 0.3, ease } },
 }
 
+const PAGE_TITLES: Record<string, string> = {
+  dashboard: 'Dashboard',
+  assets: 'Assets',
+  claims: 'Claims',
+  create: 'New Claim',
+  history: 'History',
+}
+
 export default function App() {
   const [view, setView] = useState<'landing' | 'app'>('landing')
   const [activePage, setActivePage] = useState('dashboard')
   const [walletConnected, setWalletConnected] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = ''
+      }
+    }
+  }, [mobileOpen])
 
   const handleLaunchApp = () => setView('app')
   const handleBackToLanding = () => setView('landing')
 
+  const navigate = (page: string) => {
+    setActivePage(page)
+    setMobileOpen(false)
+  }
+
   const renderPage = () => {
     switch (activePage) {
-      case 'dashboard': return <Dashboard onNavigate={setActivePage} />
-      case 'assets': return <Assets onNavigate={setActivePage} />
+      case 'dashboard': return <Dashboard onNavigate={navigate} />
+      case 'assets': return <Assets onNavigate={navigate} />
       case 'claims': return <Claims />
-      case 'create': return <CreateClaim onNavigate={setActivePage} />
+      case 'create': return <CreateClaim onNavigate={navigate} />
       case 'history': return <History />
-      default: return <Dashboard onNavigate={setActivePage} />
+      default: return <Dashboard onNavigate={navigate} />
     }
   }
 
@@ -60,16 +83,24 @@ export default function App() {
           initial="initial"
           animate="animate"
           exit="exit"
-          className="flex h-screen bg-background"
+          className="relative flex h-screen bg-background overflow-hidden"
         >
-          <Sidebar activePage={activePage} onNavigate={setActivePage} />
-          <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Ambient background layers */}
+          <div className="fixed inset-0 mesh-gradient pointer-events-none" aria-hidden />
+          <div className="fixed inset-0 grid-bg opacity-25 pointer-events-none" aria-hidden />
+          <div className="orb w-[520px] h-[520px] bg-primary/15 top-[-140px] left-[20%] pointer-events-none" aria-hidden />
+          <div className="orb w-[380px] h-[380px] bg-info/10 bottom-[-120px] right-[12%] pointer-events-none" style={{ animationDelay: '2.5s', animationDuration: '9s' }} aria-hidden />
+
+          <Sidebar activePage={activePage} onNavigate={navigate} mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
+          <div className="flex-1 flex flex-col overflow-hidden relative z-10">
             <Header
               onConnectWallet={() => setWalletConnected(!walletConnected)}
               connected={walletConnected}
               onBackToLanding={handleBackToLanding}
+              onOpenMobile={() => setMobileOpen(true)}
+              pageTitle={PAGE_TITLES[activePage] ?? 'Dashboard'}
             />
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1 overflow-y-auto px-6">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activePage}
@@ -77,6 +108,7 @@ export default function App() {
                   initial="initial"
                   animate="animate"
                   exit="exit"
+                  className="py-6"
                 >
                   {renderPage()}
                 </motion.div>

@@ -1,65 +1,124 @@
+import { type ElementType } from 'react'
+import { LayoutDashboard, Boxes, ClipboardList, BadgePlus, ScrollText, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+type PageId = 'dashboard' | 'assets' | 'claims' | 'create' | 'history'
 
 interface SidebarProps {
   activePage: string
   onNavigate: (page: string) => void
+  mobileOpen?: boolean
+  onCloseMobile?: () => void
 }
 
-const navItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-  )},
-  { id: 'assets', label: 'Assets', icon: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-  )},
-  { id: 'claims', label: 'Claims', icon: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-  )},
-  { id: 'create', label: 'New Claim', icon: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
-  )},
-  { id: 'history', label: 'History', icon: (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-  )},
+const navItems: { id: PageId; label: string; icon: ElementType }[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'assets', label: 'Assets', icon: Boxes },
+  { id: 'claims', label: 'Claims', icon: ClipboardList },
+  { id: 'create', label: 'New Claim', icon: BadgePlus },
+  { id: 'history', label: 'History', icon: ScrollText },
 ]
 
-export function Sidebar({ activePage, onNavigate }: SidebarProps) {
+function SidebarContent({ activePage, onNavigate }: Pick<SidebarProps, 'activePage' | 'onNavigate'>) {
   return (
-    <aside className="w-60 border-r border-border/50 bg-surface/80 backdrop-blur-xl flex flex-col min-h-screen shrink-0">
-      <div className="p-5 border-b border-border/50">
-        <button onClick={() => onNavigate('dashboard')} className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-          <img src="/logo.png" alt="Hypotheca" className="w-8 h-8 rounded-lg object-cover" />
-          <span className="font-semibold text-text text-base tracking-tight">HYPOTECHA</span>
+    <>
+      <div className="px-5 py-5 border-b border-white/[0.06]">
+        <button
+          onClick={() => onNavigate('dashboard')}
+          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+        >
+          <img
+            src="/logo.png"
+            alt="Hypotheca"
+            className="w-9 h-9 rounded-lg object-cover shadow-lg shadow-black/50"
+          />
+          <div className="text-left">
+            <div className="text-[15px] font-bold tracking-tight text-text">HYPOTECHA</div>
+            <div className="text-[10px] uppercase tracking-[0.2em] text-text-muted">Encumbrance OS</div>
+          </div>
         </button>
       </div>
-      <nav className="flex-1 p-3 space-y-1">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onNavigate(item.id)}
-            className={cn(
-              'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-left',
-              activePage === item.id
-                ? 'bg-primary/10 text-primary border border-primary/20'
-                : 'text-text-secondary hover:bg-surface-raised hover:text-text border border-transparent'
-            )}
-          >
-            <span className={cn(
-              'flex items-center justify-center w-7 h-7 rounded-lg transition-all',
-              activePage === item.id ? 'bg-primary/15' : 'bg-surface-raised'
-            )}>
-              {item.icon}
-            </span>
-            {item.label}
-          </button>
-        ))}
+
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <div className="px-3 pb-2 text-[10px] uppercase tracking-[0.2em] text-text-muted">Protocol</div>
+        {navItems.map((item) => {
+          const Icon = item.icon
+          const active = activePage === item.id
+          return (
+            <button
+              key={item.id}
+              onClick={() => onNavigate(item.id)}
+              className={cn(
+                'group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-left relative',
+                active
+                  ? 'liquid-glass text-primary border border-primary/25'
+                  : 'text-text-secondary hover:bg-white/[0.04] hover:text-text border border-transparent'
+              )}
+            >
+              <span
+                className={cn(
+                  'flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200',
+                  active
+                    ? 'bg-primary/15 text-primary shadow-inner'
+                    : 'bg-surface-raised text-text-muted group-hover:text-text'
+                )}
+              >
+                <Icon className="w-4 h-4" strokeWidth={1.75} />
+              </span>
+              {item.label}
+              {item.id === 'create' && (
+                <span className="ml-auto text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-primary/15 text-primary">
+                  New
+                </span>
+              )}
+            </button>
+          )
+        })}
       </nav>
-      <div className="p-4 border-t border-border/50">
-        <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl glass border border-border/50 text-xs">
+
+      <div className="px-4 py-4 border-t border-white/[0.06] space-y-2">
+        <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl liquid-glass text-[11px]">
           <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          <span className="text-text-secondary font-mono">Hedera Testnet</span>
+          <span className="text-text-secondary font-medium">Hedera Testnet</span>
+          <span className="ml-auto font-mono text-text-muted">0.0.296</span>
         </div>
+        <p className="px-3 text-[10px] leading-relaxed text-text-muted">
+          Every claim guarded on-chain against double-pledging.
+        </p>
       </div>
-    </aside>
+    </>
+  )
+}
+
+export function Sidebar({ activePage, onNavigate, mobileOpen, onCloseMobile }: SidebarProps) {
+  return (
+    <>
+      {/* Desktop */}
+      <aside className="hidden lg:flex w-64 flex-col shrink-0 bg-[rgba(9,14,28,0.72)] backdrop-blur-2xl border-r border-white/[0.07] min-h-screen">
+        <SidebarContent activePage={activePage} onNavigate={onNavigate} />
+      </aside>
+
+      {/* Mobile drawer */}
+      <div
+        className={cn(
+          'fixed inset-0 z-50 lg:hidden transition-opacity duration-300',
+          mobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        )}
+      >
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCloseMobile} />
+        <aside className="absolute inset-y-0 left-0 w-72 max-w-[85vw] bg-surface flex flex-col border-r border-white/10 shadow-2xl transition-transform duration-300"
+          style={{ transform: mobileOpen ? 'translateX(0)' : 'translateX(-110%)' }}
+        >
+          <button
+            onClick={onCloseMobile}
+            className="absolute top-4 right-4 w-9 h-9 rounded-xl liquid-glass flex items-center justify-center text-text-secondary hover:text-text"
+            aria-label="Close menu"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <SidebarContent activePage={activePage} onNavigate={onNavigate} />
+        </aside>
+      </div>
+    </>
   )
 }
