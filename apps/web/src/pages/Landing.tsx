@@ -219,7 +219,7 @@ export function Landing({ onLaunchApp }: LandingProps) {
 
       {/* HERO */}
       <section ref={heroRef} className="relative pt-28 pb-16 px-6 overflow-hidden min-h-screen">
-        <SectionBackground kind="video" src="/bg/hero-main.mp4" opacity={70} overlay="linear-gradient(to bottom, rgba(4,6,13,0.55), rgba(4,6,13,0.42) 45%, rgba(4,6,13,0.75))" />
+        <SectionBackground kind="video" src="/bg/hero-main.mp4" opacity={70} overlay="linear-gradient(to bottom, rgba(4,6,13,0.55) 0%, rgba(4,6,13,0.38) 40%, rgba(4,6,13,0.5) 72%, rgba(4,6,13,0.6) 100%)" />
 
         {/* Floating crypto coins */}
         <FloatingCoins />
@@ -326,22 +326,11 @@ export function Landing({ onLaunchApp }: LandingProps) {
       {/* LIVE TICKER */}
       <LiveTicker />
 
-      {/* STATS */}
-      <section className="py-24 px-6 relative overflow-hidden">
-        <SectionBackground kind="image" src="/bg/stats-metal.jpg" opacity={40} overlay="linear-gradient(to bottom, rgba(4,6,13,0.8), rgba(4,6,13,0.62) 50%, rgba(4,6,13,0.86))" />
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-            <StatCard value="$16T+" label="Tokenized RWA Market" sub="Projected by 2030" delay="0ms" />
-            <StatCard value="0" label="Double-Pledges" sub="With Hypotheca enforcement" delay="100ms" />
-            <StatCard value="<50ms" label="On-Chain Verification" sub="Guard check latency" delay="200ms" />
-            <StatCard value="100%" label="Audit Trail" sub="Full claim history on-chain" delay="300ms" />
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURES */}
-      <section id="features" className="py-24 px-6 relative overflow-hidden">
+      {/* FEATURES · HOW IT WORKS — shared wave background */}
+      <div className="relative overflow-hidden">
         <SectionBackground kind="video" src="/bg/wave.mp4" opacity={62} overlay="linear-gradient(to bottom, rgba(4,6,13,0.72), rgba(4,6,13,0.55) 50%, rgba(4,6,13,0.82))" />
+
+        <section id="features" className="py-24 px-6 relative">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-primary/[0.03] rounded-full blur-[100px] pointer-events-none" />
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="max-w-3xl mb-14">
@@ -415,9 +404,7 @@ export function Landing({ onLaunchApp }: LandingProps) {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how-it-works" className="py-24 px-6 relative overflow-hidden">
-        <SectionBackground kind="video" src="/bg/vortex.mp4" opacity={52} overlay="linear-gradient(to bottom, rgba(4,6,13,0.78), rgba(4,6,13,0.6) 50%, rgba(4,6,13,0.85))" />
-        <div className="absolute inset-0 bg-surface/30" />
+        <section id="how-it-works" className="py-24 px-6 relative">
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-16">
             <SectionLabel>The Journey</SectionLabel>
@@ -511,12 +498,21 @@ export function Landing({ onLaunchApp }: LandingProps) {
             )}
           </div>
         </div>
-      </section>
+        </section>
+      </div>
 
-      {/* USE CASES */}
-      <section id="use-cases" className="py-24 px-6 relative overflow-hidden">
-        <SectionBackground kind="image" src="/bg/silver-lines.jpg" opacity={26} overlay="linear-gradient(to bottom, rgba(4,6,13,0.85), rgba(4,6,13,0.7) 50%, rgba(4,6,13,0.9))" />
-        <div className="max-w-7xl mx-auto relative z-10">
+      {/* USE CASES · CTA · FOOTER — shared background down to the footer */}
+      <div className="relative overflow-hidden">
+        <SectionBackground
+          kind="image"
+          src="/bg/silver-lines.jpg"
+          opacity={24}
+          overlay="linear-gradient(to bottom, rgba(4,6,13,0.85) 0%, rgba(4,6,13,0.6) 45%, rgba(4,6,13,0.45) 100%)"
+        />
+
+        {/* USE CASES */}
+        <section id="use-cases" className="py-24 px-6 relative">
+          <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-16">
             <SectionLabel>Where It Fits</SectionLabel>
             <h2 className="text-3xl md:text-5xl font-bold text-text mb-4">A Fit for Every Market</h2>
@@ -617,7 +613,7 @@ export function Landing({ onLaunchApp }: LandingProps) {
       </section>
 
       {/* CTA */}
-      <section className="py-24 px-6">
+      <section className="py-24 px-6 relative">
         <div className="max-w-4xl mx-auto">
           <div className="liquid-glass-strong rounded-3xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-72 h-72 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
@@ -669,6 +665,7 @@ export function Landing({ onLaunchApp }: LandingProps) {
           </div>
         </div>
       </footer>
+      </div>
 
       </div>
   )
