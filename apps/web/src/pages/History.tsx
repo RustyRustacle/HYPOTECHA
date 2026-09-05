@@ -12,9 +12,10 @@ const legend = [
 
 export function History() {
   return (
-    <div className="space-y-6 max-w-5xl">
-      <PageHero
-        badge="Audit · Mirror Node"
+    <div className="space-y-6">
+      <div className="-mt-6">
+        <PageHero
+          badge="Audit · Mirror Node"
         title="Transaction"
         accent="History"
         subtitle="The immutable audit trail of every encumbrance event, streamed from the Hedera Mirror Node."
@@ -26,7 +27,9 @@ export function History() {
           </div>
         }
       />
+      </div>
 
+      <div className="max-w-5xl space-y-6">
       <div className="flex flex-wrap items-center gap-2">
         {legend.map((item) => (
           <span
@@ -43,6 +46,7 @@ export function History() {
       </div>
 
       <EventLog events={mockEvents} maxHeight="max-h-[560px]" />
+      </div>
     </div>
   )
 }
