@@ -10,7 +10,7 @@ const tickerItems = [
 
 export function LiveTicker() {
   return (
-    <div className="relative overflow-hidden border-y border-border/40 bg-surface/60 backdrop-blur-sm">
+    <div className="relative overflow-hidden border-y border-white/5 bg-surface/25 backdrop-blur-sm">
       <div className="flex w-max animate-[marquee_40s_linear_infinite] hover:[animation-play-state:paused]">
         {[...tickerItems, ...tickerItems].map((item, i) => (
           <div key={i} className="flex items-center gap-2 px-8 py-3 shrink-0">
