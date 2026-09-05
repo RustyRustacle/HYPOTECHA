@@ -44,8 +44,19 @@ export function EncumbranceBar({ asset, onPledge }: EncumbranceBarProps) {
       <div className="relative z-10">
         <div className="flex items-center justify-between gap-4 mb-5">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0">
-              {asset.symbol.slice(0, 2).toUpperCase()}
+            <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-white/15 shrink-0">
+              <div className="absolute inset-0 flex items-center justify-center text-primary font-bold text-sm bg-primary/10">
+                {asset.symbol.slice(0, 2).toUpperCase()}
+              </div>
+              {asset.img && (
+                <img
+                  src={asset.img}
+                  alt={asset.name}
+                  loading="lazy"
+                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+              )}
             </div>
             <div className="min-w-0">
               <h3 className="text-[15px] font-semibold text-text truncate">{asset.name}</h3>
