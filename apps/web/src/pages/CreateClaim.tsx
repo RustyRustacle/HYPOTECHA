@@ -45,15 +45,18 @@ export function CreateClaim({ onNavigate }: CreateClaimProps) {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl">
-      <PageHero
-        badge="New Encumbrance"
+    <div className="space-y-6">
+      <div className="-mt-6">
+        <PageHero
+          badge="New Encumbrance"
         title="Pledge a"
         accent="Claim"
         subtitle="Guard a portion of an asset as collateral. If it exceeds the free balance, the chain rejects it — automatically."
         media={{ kind: 'video', src: '/app-bg/pledge.mp4', opacity: 50 }}
       />
+      </div>
 
+      <div className="max-w-6xl space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
         {/* Form */}
         <div className="lg:col-span-3 relative liquid-glass-strong rounded-3xl p-6 md:p-7">
@@ -71,7 +74,23 @@ export function CreateClaim({ onNavigate }: CreateClaimProps) {
 
             {/* Asset select */}
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">Select Asset</label>
+              <label className="flex items-center gap-2 text-sm font-medium text-text-secondary mb-2">
+              Select Asset
+              {selectedAsset.img && (
+                <span className="inline-flex relative w-6 h-6 rounded-md overflow-hidden border border-white/15 shrink-0">
+                  <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-primary bg-surface-raised">
+                    {selectedAsset.symbol.slice(0, 2).toUpperCase()}
+                  </span>
+                  <img
+                    src={selectedAsset.img}
+                    alt=""
+                    loading="lazy"
+                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                </span>
+              )}
+            </label>
               <div className="relative">
                 <select
                   value={selectedAsset.address}
@@ -312,6 +331,7 @@ export function CreateClaim({ onNavigate }: CreateClaimProps) {
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       <RejectionModal
