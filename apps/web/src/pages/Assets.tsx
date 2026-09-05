@@ -29,13 +29,22 @@ function AssetCard({ asset, onOpen }: { asset: (typeof mockAssets)[number]; onOp
         <div className="flex items-center gap-3 mb-5">
           <div
             className={cn(
-              'w-12 h-12 rounded-2xl flex items-center justify-center text-primary font-bold text-sm border',
-              asset.totalHeld > 0
-                ? 'bg-primary/10 border-primary/25'
-                : 'bg-surface-raised border-white/10'
+              'relative w-12 h-12 rounded-2xl overflow-hidden border shrink-0',
+              asset.totalHeld > 0 ? 'border-primary/25' : 'border-white/10'
             )}
           >
-            {asset.symbol.slice(0, 2).toUpperCase()}
+            <div className="absolute inset-0 flex items-center justify-center text-primary font-bold text-sm bg-surface-raised">
+              {asset.symbol.slice(0, 2).toUpperCase()}
+            </div>
+            {asset.img && (
+              <img
+                src={asset.img}
+                alt={asset.name}
+                loading="lazy"
+                onError={(e) => (e.currentTarget.style.display = 'none')}
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+            )}
           </div>
           <div className="min-w-0">
             <div className="text-sm font-semibold text-text truncate">{asset.name}</div>
@@ -90,13 +99,15 @@ function AssetCard({ asset, onOpen }: { asset: (typeof mockAssets)[number]; onOp
 export function Assets({ onNavigate }: AssetsProps) {
   return (
     <div className="space-y-6">
-      <PageHero
-        badge="Issuer · Portfolio"
+      <div className="-mt-6">
+        <PageHero
+          badge="Issuer · Portfolio"
         title="Tokenized"
         accent="Assets"
         subtitle="Every registered tokenized asset with its encumbrance status — total, held, and still free to pledge."
         media={{ kind: 'video', src: '/app-bg/assets.mp4', opacity: 55 }}
       />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {mockAssets.map((asset) => (
