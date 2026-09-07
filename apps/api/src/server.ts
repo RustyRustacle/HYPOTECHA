@@ -43,7 +43,7 @@ const port = Number(process.env.PORT ?? 4000);
 
 const claimSchema = z.object({
   token: z.string().min(1),
-  holder: z.string().min(1),
+  holder: z.string().min(1).optional(),
   claimant: z.string().min(1),
   amount: z.coerce.bigint().refine((v) => v > 0n, 'amount must be > 0'),
   partition: z
@@ -109,12 +109,12 @@ app.get('/api/assets/:token/available-balance', async (req, res) => {
   try {
     const instance = await toInstance(req.params.token);
     const holder = String(req.query.holder ?? signer?.address ?? '').toLowerCase();
-    if (!holder) return res.status(400).json({ message: 'holder query param required' });
+if (!holder) return res.status(400).json({ message: 'holder query param required' });
 
     const verdict = await makeVerdict(projection, instance.assetEvm, holder, 0n, rpcUrl);
     res.json({
       token: instance.assetSymbol,
-      totalBalance: verdict.balance.toString(),
+      totalBalance: (verdict.balance + verdict.held).toString(),
       totalHeld: verdict.held.toString(),
       availableBalance: verdict.available.toString(),
       holder
@@ -177,7 +177,7 @@ app.post('/api/encumbrances/guard', async (req, res) => {
     const verdict = await makeVerdict(
       projection,
       instance.assetEvm,
-      parsed.data.holder,
+      parsed.data.holder ?? signer?.address ?? "",
       parsed.data.amount,
       rpcUrl,
       parsed.data.partition,
@@ -193,8 +193,16 @@ app.post('/api/encumbrances/guard', async (req, res) => {
       requested: verdict.requested.toString(),
       shortfall: verdict.shortfall.toString(),
       code: verdict.code ?? null,
+      reason: verdict.reason ?? null,
       partition: verdict.partition,
-      claimant: verdict.claimant
+      claimant: verdict.claimant,
+      conflict: verdict.conflict
+        ? {
+            existingHoldId: verdict.conflict.existingHoldId,
+            existingClaimant: verdict.conflict.existingClaimant ?? null,
+            existingAmount: verdict.conflict.existingAmount.toString()
+          }
+        : null
     };
     return verdict.ok ? res.json(body) : res.status(409).json(body);
   } catch (error) {
@@ -211,30 +219,57 @@ app.post('/api/encumbrances', async (req, res) => {
     const verdict = await makeVerdict(
       projection,
       instance.assetEvm,
-      parsed.data.holder,
+      parsed.data.holder ?? signer?.address ?? "",
       parsed.data.amount,
       rpcUrl,
       parsed.data.partition,
       parsed.data.claimant
     );
     if (!verdict.ok) {
+      try {
+        const rejected: Envelope = {
+          v: 1,
+          op: 'CONFLICT_REJECTED',
+          assetId: instance.platformId,
+          chainPartition: parsed.data.partition,
+          sourceContract: instance.assetEvm,
+          holder: parsed.data.holder ?? signer?.address ?? "",
+          escrow: parsed.data.claimant,
+          to: parsed.data.claimant,
+          partition: parsed.data.partition,
+          amount: parsed.data.amount.toString(),
+          rejectedCode: verdict.code,
+          rejectedReason: verdict.reason ?? 'Rejected by registry guard'
+        };
+        await bus.publish(rejected);
+      } catch {
+        // best-effort: the rejection is still returned to the caller
+      }
       return res.status(409).json({
         ok: false,
-        message: 'Over-pledge detected: requested exceeds available balance',
+        message: verdict.reason ?? 'Over-pledge detected: requested exceeds available balance',
         requested: verdict.requested.toString(),
         available: verdict.available.toString(),
         shortfall: verdict.shortfall.toString(),
-        code: verdict.code
-      });
+        code: verdict.code,
+        reason: verdict.reason ?? null,
+        conflict: verdict.conflict
+          ? {
+              existingHoldId: verdict.conflict.existingHoldId,
+              existingClaimant: verdict.conflict.existingClaimant ?? null,
+              existingAmount: verdict.conflict.existingAmount.toString()
+            }
+          : null
+});
     }
 
     let holdId: string | undefined;
     if (parsed.data.materialize && signer) {
-      const ats = new AtsToken(instance.assetEvm, signer);
+      const ats = new AtsToken(instance.assetEvm, signer, { mirrorBase });
       holdId = await ats.createHoldByPartition({
         partition: parsed.data.partition,
         amount: parsed.data.amount,
-        expirationTimestamp: 0n,
+        expirationTimestamp: BigInt(instance.maturityTs),
         escrow: parsed.data.claimant,
         to: parsed.data.claimant
       });
@@ -247,7 +282,7 @@ app.post('/api/encumbrances', async (req, res) => {
       chainPartition: parsed.data.partition,
       sourceContract: instance.assetEvm,
       holdId,
-      holder: parsed.data.holder,
+      holder: parsed.data.holder ?? signer?.address ?? "",
       escrow: parsed.data.claimant,
       to: parsed.data.claimant,
       partition: parsed.data.partition,
@@ -260,7 +295,7 @@ app.post('/api/encumbrances', async (req, res) => {
       holdId: holdId ?? null,
       token: instance.assetSymbol,
       tokenEvm: instance.assetEvm,
-      holder: parsed.data.holder,
+      holder: parsed.data.holder ?? signer?.address ?? "",
       claimant: parsed.data.claimant,
       amount: parsed.data.amount.toString(),
       partition: parsed.data.partition,
@@ -272,6 +307,62 @@ app.post('/api/encumbrances', async (req, res) => {
     return res.status(202).json({ message: 'Encumbrance recorded on the HCS registry', claim });
   } catch (error) {
     return res.status(502).json({ message: `create encumbrance failed: ${String(error)}` });
+  }
+});
+
+app.post('/api/encumbrances/:claimId/release', async (req, res) => {
+  try {
+    const hold = projection.find(req.params.claimId);
+    if (!hold || hold.status !== 'active') {
+      return res.status(404).json({ message: 'Active encumbrance not found' });
+}
+
+    let atsReleaseTx: string | undefined;
+    const isNumericHold = /^\d+$/.test(hold.key);
+    if (signer && hold.partition && isNumericHold) {
+      try {
+        const ats = new AtsToken(hold.token, signer, { mirrorBase });
+        atsReleaseTx = await ats.releaseHoldByPartition(
+          { partition: hold.partition, tokenHolder: hold.holder, holdId: BigInt(hold.key) },
+          hold.amount
+        );
+      } catch (error) {
+        return res.status(502).json({ message: `ATS release failed: ${String(error)}` });
+      }
+    }
+
+    const released: Envelope = {
+      v: 1,
+      op: 'HOLD_RELEASED',
+      assetId: hold.assetId,
+      chainPartition: hold.partition,
+      sourceContract: hold.token,
+      holdId: hold.key,
+      holder: hold.holder,
+      escrow: hold.claimant,
+      to: hold.to,
+      partition: hold.partition,
+      amount: hold.amount.toString(),
+      txId: atsReleaseTx
+    };
+    const hcsStatus = await bus.publish(released);
+
+    return res.json({
+      message: 'Encumbrance released on the HCS registry',
+      claim: {
+        holdId: hold.key,
+        token: hold.token,
+        holder: hold.holder,
+        claimant: hold.claimant,
+        amount: hold.amount.toString(),
+        partition: hold.partition,
+        status: 'released',
+        statusText: hcsStatus,
+        releasedAt: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    return res.status(502).json({ message: `release encumbrance failed: ${String(error)}` });
   }
 });
 
