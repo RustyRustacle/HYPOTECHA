@@ -104,7 +104,7 @@ export function Assets({ onNavigate }: AssetsProps) {
           badge="Issuer · Portfolio"
         title="Tokenized"
         accent="Assets"
-        subtitle="Every registered tokenized asset with its encumbrance status — total, held, and still free to pledge."
+        subtitle="Every registered tokenized asset with its encumbrance status — total, held, and still free to pledge across all connected platforms."
         media={{ kind: 'video', src: '/app-bg/assets.mp4', opacity: 55 }}
       />
       </div>
