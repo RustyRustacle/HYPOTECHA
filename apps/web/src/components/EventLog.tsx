@@ -8,10 +8,18 @@ interface EventLogProps {
 }
 
 const eventMeta: Record<LiveEvent['type'], { glyph: string; text: string }> = {
-  EncumbranceCreated: { glyph: '↑', text: 'text-primary-light' },
-  EncumbranceReleased: { glyph: '↓', text: 'text-info-light' },
-  EncumbranceRejected: { glyph: '✕', text: 'text-danger' },
-  EncumbranceDefaulted: { glyph: '⚠', text: 'text-warning-light' },
+  HOLD_CREATED: { glyph: '↑', text: 'text-primary-light' },
+  HOLD_RELEASED: { glyph: '↓', text: 'text-info-light' },
+  HOLD_EXECUTED: { glyph: '↓', text: 'text-warning-light' },
+  CONFLICT_REJECTED: { glyph: '✕', text: 'text-danger' },
+}
+
+function PlatformTag({ id }: { id: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-surface-raised border border-white/10 text-[9px] font-mono tracking-wider text-text-muted">
+      {id.toUpperCase()}
+    </span>
+  )
 }
 
 export function EventLog({ events, maxHeight = 'max-h-[520px]' }: EventLogProps) {
@@ -41,7 +49,7 @@ export function EventLog({ events, maxHeight = 'max-h-[520px]' }: EventLogProps)
           <span className="w-2.5 h-2.5 rounded-full bg-warning/60" />
           <span className="w-2.5 h-2.5 rounded-full bg-primary/70" />
           <span className="ml-2 text-[10px] uppercase tracking-[0.2em] text-text-muted font-mono">
-            mirror-node · encumbrance.events
+            hcs-topic · registry.events
           </span>
         </div>
 
@@ -61,6 +69,7 @@ export function EventLog({ events, maxHeight = 'max-h-[520px]' }: EventLogProps)
                   <div className="flex items-center gap-2">
                     <span className={meta.text}>{meta.glyph}</span>
                     <span className={meta.text}>{event.type}</span>
+                    <PlatformTag id={event.platformId} />
                     <span className="text-text-secondary">{event.tokenName}</span>
                     <span className="text-text-muted">→</span>
                     <span className="text-text-secondary">{event.claimantName}</span>
@@ -102,7 +111,7 @@ export function EventLog({ events, maxHeight = 'max-h-[520px]' }: EventLogProps)
       <div className="flex items-center justify-center gap-2 mt-3">
         <span className="w-1 h-1 rounded-full bg-primary animate-pulse" />
         <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted">
-          Every event verifiable on Hedera
+          Every record verifiable on Hedera · HCS topic
         </span>
       </div>
     </div>
