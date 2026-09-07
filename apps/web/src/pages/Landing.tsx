@@ -4,7 +4,6 @@ import { ParticlesBackground } from '@/components/ParticlesBackground'
 import { SectionBackground } from '@/components/SectionBackground'
 import { LiveTicker } from '@/components/LiveTicker'
 import { useTyping } from '@/lib/useTyping'
-import { useCounter } from '@/lib/useCounter'
 
 interface LandingProps {
   onLaunchApp: () => void
@@ -27,22 +26,6 @@ function SectionLabel({ children }: { children: ReactNode }) {
   return (
     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass text-[11px] text-text-muted uppercase tracking-[0.2em] mb-5">
       {children}
-    </div>
-  )
-}
-
-function StatCard({ value, label, sub, delay }: { value: string; label: string; sub: string; delay: string }) {
-  const { ref, visible } = useSectionReveal()
-  const num = /^\$?[\d.,]+[T%+<k]*$/.test(value) ? parseFloat(value.replace(/[^0-9.]/g, '')) : 0
-  const counter = useCounter(num, 1600, visible)
-  const prefix = value.startsWith('$') ? '$' : ''
-  const suffix = value.replace(/[0-9.,$]/g, '')
-  const display = num ? prefix + counter.toLocaleString(undefined, { maximumFractionDigits: 0 }) + suffix : value
-  return (
-    <div ref={ref} className={`liquid-glass rounded-2xl p-6 text-center transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`} style={{ transitionDelay: delay }}>
-      <div className="text-3xl md:text-4xl font-bold font-mono gradient-text-numbers mb-2">{display}</div>
-      <div className="text-sm font-medium text-text-secondary mb-1">{label}</div>
-      <div className="text-xs text-text-muted">{sub}</div>
     </div>
   )
 }
