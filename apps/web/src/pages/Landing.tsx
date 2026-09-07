@@ -112,7 +112,7 @@ function EventLog({ events }: { events: { msg: string; type?: 'pass' | 'reject' 
       </div>
       <div className="flex items-center justify-center gap-2">
         <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-        <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted">Every event verifiable on Hedera</span>
+        <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted">Every record verifiable on Hedera · HCS topic</span>
       </div>
     </div>
   )
@@ -245,9 +245,8 @@ export function Landing({ onLaunchApp }: LandingProps) {
 
           {/* Subtitle */}
           <p className={`text-lg md:text-xl text-text-secondary max-w-2xl mx-auto mb-8 leading-relaxed transition-all duration-700 delay-200 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-            One asset should never secure two loans at the same time. Hypotheca records,
-            enforces, and verifies every collateral claim on-chain — one shared
-            source of truth for lenders and borrowers, built on{' '}
+            One shared on-chain registry across every lending platform — so no asset
+            ever backs two loans, anywhere. Built on{' '}
             <span className="text-text font-medium">Hedera Asset Tokenization Studio</span>.
           </p>
 
@@ -307,11 +306,12 @@ export function Landing({ onLaunchApp }: LandingProps) {
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-slate-400 shadow-sm shadow-slate-400/50" />
                       <span className="text-text-secondary">Bank A</span>
-                      <span className="font-mono text-text-muted">$600K</span>
+                      <span className="font-mono text-text-muted">{'[ALPHA]'} $600K</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-primary/50 shadow-sm shadow-primary/30" />
                       <span className="text-text-secondary">Available</span>
+                      <span className="font-mono text-text-muted">[ALL]</span>
                       <span className="font-mono text-primary">$400K</span>
                     </div>
                   </div>
@@ -339,9 +339,10 @@ export function Landing({ onLaunchApp }: LandingProps) {
               The Same Asset,<br className="hidden md:block" /> Financed Twice.
             </h2>
             <p className="text-text-secondary text-lg leading-relaxed">
-              Collateral is meant to be trusted. On a ledger, though, nothing stops the
-              same bond from quietly backing two loans at once — until someone defaults
-              and everyone finds out too late.
+              Collateral is meant to be trusted. But banks don't all use the same
+              ledger — and nothing stops the same bond from quietly backing two loans
+              on two different platforms — until someone defaults and everyone finds
+              out too late.
             </p>
           </div>
 
@@ -349,14 +350,14 @@ export function Landing({ onLaunchApp }: LandingProps) {
             {/* Problem narrative */}
             <div className="lg:col-span-3 flex flex-col gap-6">
               <div className="liquid-glass rounded-2xl p-6 md:p-8 flex-1">
-                <div className="text-[10px] uppercase tracking-[0.2em] text-text-muted mb-5">What happens without a guard</div>
+                <div className="text-[10px] uppercase tracking-[0.2em] text-text-muted mb-5">What happens without a registry</div>
                 <div className="flex flex-col gap-2.5 font-mono text-xs">
                   <div className="flex items-center justify-between rounded-lg bg-surface-raised/60 border border-border/50 px-4 py-3">
-                    <span className="text-text-secondary">BANK A · Treasury #123</span>
+                    <span className="text-text-secondary">BANK A · Treasury #123 <span className="text-text-muted text-[10px]">[ALPHA]</span></span>
                     <span className="text-text font-medium">$600,000 · SIGNED</span>
                   </div>
                   <div className="flex items-center justify-between rounded-lg bg-surface-raised/60 border border-border/50 px-4 py-3">
-                    <span className="text-text-secondary">BANK B · Treasury #123</span>
+                    <span className="text-text-secondary">BANK B · Treasury #123 <span className="text-text-muted text-[10px]">[BETA]</span></span>
                     <span className="text-text font-medium">$500,000 · SIGNED</span>
                   </div>
                   <div className="flex items-center justify-between rounded-lg bg-danger/10 border border-danger/25 px-4 py-3">
@@ -365,8 +366,8 @@ export function Landing({ onLaunchApp }: LandingProps) {
                   </div>
                 </div>
                 <p className="mt-5 text-sm text-text-secondary leading-relaxed">
-                  Both banks hold paper saying they are first in line for the same bond.
-                  No ledger will ever admit it — until it is too late.
+                  Two banks, two platforms, one bond — and both hold paper saying they
+                  are first in line. No single ledger can see the conflict.
                 </p>
               </div>
               <figure className="liquid-glass rounded-2xl p-6 md:p-8">
@@ -381,21 +382,21 @@ export function Landing({ onLaunchApp }: LandingProps) {
               <FeatureCard
                 featured
                 icon={<svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>}
-                title="The guard never blinks"
-                desc="When Bank B tries to pledge the same treasury, Hypotheca checks the numbers and turns the request away — on-chain, automatically, in under 50ms."
+                title="The registry never blinks"
+                desc="When Bank B tries to pledge the same treasury on Platform Beta, the registry spots Bank A's hold on Platform Alpha and turns the request away — automatically, in under 50ms."
                 accent="from-primary/5 to-transparent"
                 delay="0ms"
               />
               <BenefitRow
                 icon={<svg className="w-6 h-6 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
-                title="Real-Time Claim Registry"
-                desc="Every claim, free balance, and release is live — auditable by anyone, anywhere."
+                title="Cross-Platform Registry"
+                desc="Every hold, free balance, and release across every participating platform is live — auditable by anyone, anywhere."
                 delay="100ms"
               />
               <BenefitRow
                 icon={<svg className="w-6 h-6 text-primary-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
-                title="Transparent Audit Trail"
-                desc="Created, released, or defaulted — a permanent history that never disappears."
+                title="Immutable Audit Trail"
+                desc="Created, released, or executed — a permanent HCS history that never disappears."
                 delay="200ms"
               />
             </div>
@@ -410,9 +411,9 @@ export function Landing({ onLaunchApp }: LandingProps) {
             <SectionLabel>The Journey</SectionLabel>
             <h2 className="text-3xl md:text-5xl font-bold text-text mb-4">How It Works</h2>
             <p className="text-text-secondary max-w-2xl mx-auto">
-              Think of Hypotheca as a digital notary for your assets. It makes sure
-              one asset is never promised to two people at the same time — in
-              three simple steps.
+              Think of Hypotheca as a shared digital notary for every lender. It
+              makes sure one asset is never promised to two people at the same time
+              — on any platform — in three simple steps.
             </p>
           </div>
 
@@ -424,8 +425,8 @@ export function Landing({ onLaunchApp }: LandingProps) {
             </div>
 
             <StepCard step="01" title="Mint Your Asset" desc="Bring a bond, building, or cargo shipment on-chain in minutes. It gets a permanent digital identity that no one can forge." active={activeStep === 0} onClick={() => setActiveStep(0)} />
-            <StepCard step="02" title="Pledge With Confidence" desc="Lenders register their claim against your asset. Hypotheca checks the value is still available — if not, the pledge is rejected on the spot." active={activeStep === 1} onClick={() => setActiveStep(1)} />
-            <StepCard step="03" title="Repay & Release" desc="Settle the loan and the claim is released, returning your full balance. Every step stays recorded forever, open for anyone to verify." active={activeStep === 2} onClick={() => setActiveStep(2)} />
+            <StepCard step="02" title="Pledge From Any Platform" desc="Lenders register their claim from any platform. The registry checks the value is free across every platform — if not, the pledge is rejected on the spot." active={activeStep === 1} onClick={() => setActiveStep(1)} />
+            <StepCard step="03" title="Repay & Release" desc="Settle the loan and the claim is released, returning your full balance. Every step stays on the shared ledger, open for anyone to verify." active={activeStep === 2} onClick={() => setActiveStep(2)} />
           </div>
 
           {/* Active step detail panel */}
@@ -437,12 +438,13 @@ export function Landing({ onLaunchApp }: LandingProps) {
                 </div>
                 <div className="text-[10px] uppercase tracking-[0.2em] text-text-muted mb-2">Step 01 · Mint the Asset</div>
                 <h4 className="text-xl font-semibold text-text mb-2">Mint a $1,000,000 treasury</h4>
-                <p className="text-sm text-text-secondary max-w-2xl mx-auto leading-relaxed">A treasury bond is turned into a digital token on Hedera in seconds. Ownership becomes a single, tamper-proof record — no paperwork, no ambiguity, just one source of truth.</p>
+                <p className="text-sm text-text-secondary max-w-2xl mx-auto leading-relaxed">A treasury bond is turned into a digital token on Hedera in seconds. Ownership becomes a single, tamper-proof record — and it gets a shared registry identity that every platform can see.</p>
                 <div className="mt-8 max-w-xl mx-auto">
                   <EventLog
                     events={[
-                      { msg: 'MINT Treasury #123 · $1,000,000', type: 'mint' },
+                      { msg: 'MINT Treasury #123 @ ALPHA · $1,000,000', type: 'mint' },
                       { msg: 'OWNER Company A confirmed on-chain', type: 'mint' },
+                      { msg: 'REGISTRY projection synced to HCS topic', type: 'info' },
                     ]}
                   />
                 </div>
@@ -453,25 +455,25 @@ export function Landing({ onLaunchApp }: LandingProps) {
                 <div className="mx-auto mb-5 w-14 h-14 rounded-2xl bg-primary/10 border border-primary/25 flex items-center justify-center text-primary">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                 </div>
-                <div className="text-[10px] uppercase tracking-[0.2em] text-text-muted mb-2">Step 02 · Guard Check</div>
-                <h4 className="text-xl font-semibold text-text mb-4">Bank A pledges $600,000</h4>
+                <div className="text-[10px] uppercase tracking-[0.2em] text-text-muted mb-2">Step 02 · Registry Check</div>
+                <h4 className="text-xl font-semibold text-text mb-4">Bank A pledges $600,000 on Alpha</h4>
                 <div className="max-w-md mx-auto mb-4">
                   <div className="flex items-center justify-between text-xs font-mono text-text-secondary mb-2">
                     <span>60% covered</span>
-                    <span className="text-primary">$400K available</span>
+                    <span className="text-primary">$400K free across platforms</span>
                   </div>
                   <div className="h-2 rounded-full bg-surface-raised overflow-hidden">
                     <div className="h-full bg-gradient-to-r from-primary to-info-light rounded-full" style={{ width: '60%' }} />
                   </div>
                 </div>
-                <p className="text-sm text-text-secondary max-w-2xl mx-auto leading-relaxed">Before anything is locked in, Hypotheca checks the numbers automatically. 60% of the asset now belongs to Bank A's claim — any new pledge that would cross that line is rejected on the spot.</p>
+                <p className="text-sm text-text-secondary max-w-2xl mx-auto leading-relaxed">Before anything is locked in, the registry checks the shared projection automatically. 60% of the asset now belongs to Bank A's claim on Alpha — when Bank B tries to pledge the same bond on Beta, the registry rejects it on the spot.</p>
                 <div className="mt-8 max-w-xl mx-auto">
                   <EventLog
                     events={[
-                      { msg: 'GUARD · available = $1,000,000', type: 'info' },
-                      { msg: 'BANK_A pledge $600,000 → PASS', type: 'pass' },
-                      { msg: 'BANK_B pledge $500,000 → REJECTED (exceeds available)', type: 'reject' },
-                      { msg: 'BALANCE updated · available = $400,000', type: 'info' },
+                      { msg: 'HOLD UST-123 @ ALPHA · BANK_A $600,000 → PASS', type: 'pass' },
+                      { msg: 'HOLD UST-123 @ BETA · BANK_B $500,000 → CONFLICT #REGISTRY-001', type: 'reject' },
+                      { msg: 'HOLD UST-123 @ BETA · BANK_B $400,000 → PASS', type: 'pass' },
+                      { msg: 'FREE across all platforms · $400,000', type: 'info' },
                     ]}
                   />
                 </div>
@@ -484,13 +486,13 @@ export function Landing({ onLaunchApp }: LandingProps) {
                 </div>
                 <div className="text-[10px] uppercase tracking-[0.2em] text-text-muted mb-2">Step 03 · Repay & Release</div>
                 <h4 className="text-xl font-semibold text-text mb-2">Repay the loan → release the claim</h4>
-                <p className="text-sm text-text-secondary max-w-2xl mx-auto leading-relaxed">The moment the loan is settled, the claim is released and the full balance is yours again. Borrowers, lenders, and regulators can look back at every decision — forever.</p>
+                <p className="text-sm text-text-secondary max-w-2xl mx-auto leading-relaxed">The moment the loan is settled, the hold is released and the full balance is free again on every platform. Borrowers, lenders, and regulators can look back at every decision — forever, on the shared ledger.</p>
                 <div className="mt-8 max-w-xl mx-auto">
                   <EventLog
                     events={[
-                      { msg: 'BANK_A repayment $600,000 → RECEIVED', type: 'pass' },
-                      { msg: 'RELEASE claim #0x7a3f → OK', type: 'pass' },
-                      { msg: 'AVAILABLE restored · $1,000,000', type: 'info' },
+                      { msg: 'HOLD_RELEASED UST-123 @ ALPHA · BANK_A $600,000 → OK', type: 'pass' },
+                      { msg: 'RELEASE published → HCS topic', type: 'info' },
+                      { msg: 'FREE across all platforms restored · $1,000,000', type: 'info' },
                     ]}
                   />
                 </div>
@@ -620,9 +622,9 @@ export function Landing({ onLaunchApp }: LandingProps) {
             <div className="absolute bottom-0 left-0 w-56 h-56 bg-info/10 rounded-full blur-[80px] pointer-events-none" />
 
             <div className="relative p-12 md:p-16 text-center z-10">
-              <h2 className="text-3xl md:text-5xl font-bold text-text mb-4">Ready to Enforce Collateral?</h2>
+              <h2 className="text-3xl md:text-5xl font-bold text-text mb-4">Connect to the Registry</h2>
               <p className="text-text-secondary max-w-lg mx-auto mb-10 leading-relaxed">
-                Start preventing double-pledging today. Deploy your EncumbranceFacet on Hedera testnet in minutes.
+                Join the shared Encumbrance Registry and stop double-pledging across institutions today. Deploy on Hedera testnet in minutes.
               </p>
               <div className="flex items-center justify-center gap-4 flex-wrap">
                 <button
@@ -652,6 +654,7 @@ export function Landing({ onLaunchApp }: LandingProps) {
           <div className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Hypotheca" className="w-7 h-7 rounded-md object-cover" />
             <span className="font-semibold text-text text-sm">HYPOTECHA</span>
+            <span className="text-xs text-text-muted">· Universal Encumbrance Registry</span>
             <span className="text-xs text-text-muted">· ETHGlobal Hedera Bounty Track</span>
           </div>
           <div className="flex items-center gap-6 text-xs text-text-muted">
