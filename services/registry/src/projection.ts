@@ -99,7 +99,7 @@ const record: HoldRecord = {
     return record;
   }
 
-  /** Total active encumbrance held against a holder for a token. */
+/** Total active encumbrance held against a holder for a token. */
   totalHeld(token: string, holder: string): bigint {
     return this.key(token.toLowerCase(), holder.toLowerCase()).get(holder.toLowerCase()) ?? 0n;
   }
@@ -108,6 +108,19 @@ const record: HoldRecord = {
     const lower = token.toLowerCase();
     return this.records.filter(
       (r) => r.token.toLowerCase() === lower && r.status === 'active' && (!holder || r.holder.toLowerCase() === holder.toLowerCase())
+    );
+  }
+
+  /**
+   * Find an ACTIVE encumbrance colliding with the same collateral slice
+   * (token + holder + partition) and the same counterparty (claimant/platform).
+   * A matching live claim means the slice is already pledged to that lender —
+   * a re-pledge is a duplicate, regardless of available balance.
+   */
+  findActiveConflict(token: string, holder: string, partition: string, applicant?: string): HoldRecord | undefined {
+    const slice = partition.toLowerCase();
+    return this.activeHolds(token, holder).find(
+      (r) => r.partition.toLowerCase() === slice && (!applicant || r.claimant?.toLowerCase() === applicant.toLowerCase())
     );
   }
 
@@ -127,7 +140,7 @@ const record: HoldRecord = {
       if (!byHolder.has(h)) byHolder.set(h, []);
       byHolder.get(h)!.push(r);
     }
-    return [...byHolder.entries()].map(([h, holds]) => ({
+return [...byHolder.entries()].map(([h, holds]) => ({
       holder: h,
       held: holds.reduce((s, r) => s + r.amount, 0n),
       activeHolds: holds
@@ -136,5 +149,9 @@ const record: HoldRecord = {
 
   history(limit = 200): HoldRecord[] {
     return this.records.slice(0, limit);
+  }
+
+  find(key: string): HoldRecord | undefined {
+    return this.records.find((r) => r.key === key);
   }
 }
