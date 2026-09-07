@@ -1,14 +1,16 @@
 import { type ReactNode } from 'react'
-import { LockKeyhole, ClipboardList, Coins, ShieldCheck, BadgePlus, ArrowRight } from 'lucide-react'
+import { LockKeyhole, ClipboardList, Coins, Network, BadgePlus, ArrowRight } from 'lucide-react'
 import { KPICard } from '@/components/KPICard'
 import { EncumbranceBar } from '@/components/EncumbranceBar'
 import { ClaimsTable } from '@/components/ClaimsTable'
 import { EventLog } from '@/components/EventLog'
 import { PageHero } from '@/components/PageHero'
-import { mockAssets, mockAllClaims, mockEvents } from '@/data/mock'
+import { PlatformLanes, type PlatformContext } from '@/components/PlatformLanes'
+import { mockAssets, mockAllClaims, mockEvents, mockPlatforms } from '@/data/mock'
 
 interface DashboardProps {
   onNavigate: (page: string) => void
+  platformContext?: PlatformContext
 }
 
 function SectionHeader({ title, sub, action }: { title: string; sub?: string; action?: ReactNode }) {
@@ -23,7 +25,10 @@ function SectionHeader({ title, sub, action }: { title: string; sub?: string; ac
   )
 }
 
-export function Dashboard({ onNavigate }: DashboardProps) {
+export function Dashboard({ onNavigate, platformContext = 'registry' }: DashboardProps) {
+  const scoped = platformContext !== 'registry'
+  const visibleClaims = scoped ? mockAllClaims.filter((c) => c.platformId === platformContext) : mockAllClaims
+  const visibleEvents = scoped ? mockEvents.filter((e) => e.platformId === platformContext) : mockEvents
   const totalHeld = mockAssets.reduce((sum, a) => sum + a.totalHeld, 0)
   const totalAvailable = mockAssets.reduce((sum, a) => sum + a.availableBalance, 0)
   const activeClaims = mockAllClaims.filter((c) => c.status === 'Active').length
@@ -32,10 +37,10 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     <div className="space-y-6">
       <div className="-mt-6">
         <PageHero
-          badge="Overview · Encumbrance OS"
+          badge="Overview · Universal Registry"
         title="On-Chain"
         accent="Oversight"
-        subtitle="Live encumbrance state across every tokenized asset — what is held, what is free, and who holds it."
+        subtitle="Live encumbrance state across every participating platform — what is held, what is free, and who holds it, in one shared ledger."
         media={{ kind: 'video', src: '/bg/plexus.mp4', opacity: 55 }}
         actions={
           <button
@@ -43,7 +48,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
             className="liquid-glass liquid-cta liquid-glass-button px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2"
           >
             <BadgePlus className="w-4 h-4" />
-            New Claim
+            Register Pledge
           </button>
         }
       />
@@ -80,17 +85,19 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           delay={160}
         />
         <KPICard
-          title="Compliance"
-          value={0}
+          title="Platforms Connected"
+          value={mockPlatforms.length}
           prefix=""
           suffix=""
-          icon={ShieldCheck}
-          change="All Clear"
+          icon={Network}
+          change="Synced"
           changeType="positive"
-          subtext="All participants verified"
+          subtext={`${mockPlatforms.map((p) => p.operator).join(' · ')}`}
           delay={240}
         />
       </div>
+
+      <PlatformLanes active={platformContext} />
 
       <div className="space-y-4">
         <SectionHeader
@@ -114,8 +121,8 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
-        <ClaimsTable claims={mockAllClaims.slice(0, 5)} onRelease={(id) => console.log('Release', id)} />
-        <EventLog events={mockEvents} />
+        <ClaimsTable claims={visibleClaims.slice(0, 5)} onRelease={(id) => console.log('Release', id)} />
+        <EventLog events={visibleEvents} />
       </div>
     </div>
   )
