@@ -15,7 +15,7 @@ const navItems: { id: PageId; label: string; icon: ElementType }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'assets', label: 'Assets', icon: Boxes },
   { id: 'claims', label: 'Claims', icon: ClipboardList },
-  { id: 'create', label: 'New Claim', icon: BadgePlus },
+  { id: 'create', label: 'Register Pledge', icon: BadgePlus },
   { id: 'history', label: 'History', icon: ScrollText },
 ]
 
@@ -34,7 +34,7 @@ function SidebarContent({ activePage, onNavigate }: Pick<SidebarProps, 'activePa
           />
           <div className="text-left">
             <div className="text-[15px] font-bold tracking-tight text-text">HYPOTECHA</div>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-text-muted">Encumbrance OS</div>
+            <div className="text-[10px] uppercase tracking-[0.2em] text-text-muted">Universal Encumbrance Registry</div>
           </div>
         </button>
       </div>
@@ -83,7 +83,7 @@ function SidebarContent({ activePage, onNavigate }: Pick<SidebarProps, 'activePa
           <span className="ml-auto font-mono text-text-muted">0.0.296</span>
         </div>
         <p className="px-3 text-[10px] leading-relaxed text-text-muted">
-          Every claim guarded on-chain against double-pledging.
+          Every claim registered on one shared on-chain ledger.
         </p>
       </div>
     </>
