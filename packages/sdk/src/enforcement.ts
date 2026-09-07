@@ -2,9 +2,10 @@ import type { GuardResult } from './types.js';
 import { GUARD_CODES, type Envelope, type GuardCode } from './types.js';
 
 /**
- * Service-level enforcement guard: computes available balance from the
- * on-chain token balance minus the sum of active encumbrances (holds) that
- * are recorded for a holder in the registry projection.
+ * Service-level enforcement guard. On ATS tokens a hold already locks the
+ * holder's `balanceOf` on-chain, so the free (unencumbered) balance IS the
+ * token balance. The registry projection is not subtracted again here — it is
+ * the mirror used for conflict detection (#REGISTRY-001) and audit.
  */
 export function checkEnoughAvailable(params: {
   token: string;
@@ -13,7 +14,7 @@ export function checkEnoughAvailable(params: {
   held: bigint;
   requested: bigint;
 }): GuardResult {
-  const available = params.balance - params.held;
+  const available = params.balance;
   const ok = available >= params.requested;
   return {
     ok,
