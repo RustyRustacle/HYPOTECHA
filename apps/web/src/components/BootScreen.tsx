@@ -14,14 +14,14 @@ interface RegistryRow {
 
 const REGISTRY_SETS: RegistryRow[][] = [
   [
-    { symbol: 'UST-123', amount: '$1,000,000', kind: 'HOLD' },
-    { symbol: 'REFT-456', amount: '$500,000', kind: 'HOLD' },
-    { symbol: 'TBC-789', amount: '$2,500,000', kind: 'FREE' },
+    { symbol: 'ALPHA · UST-123', amount: '$1,000,000', kind: 'HOLD' },
+    { symbol: 'ALPHA · TCB-456', amount: '$500,000', kind: 'HOLD' },
+    { symbol: 'BETA · CRG-014', amount: '$2,500,000', kind: 'FREE' },
   ],
   [
-    { symbol: 'CNS-231', amount: '$750,000', kind: 'HOLD' },
-    { symbol: 'GLD-552', amount: '$300,000', kind: 'FREE' },
-    { symbol: 'RWA-077', amount: '$1,800,000', kind: 'HOLD' },
+    { symbol: 'BETA · CNS-231', amount: '$750,000', kind: 'HOLD' },
+    { symbol: 'ALPHA · GLD-552', amount: '$300,000', kind: 'FREE' },
+    { symbol: 'BETA · RWA-077', amount: '$1,800,000', kind: 'HOLD' },
   ],
 ]
 
@@ -87,7 +87,7 @@ export function BootScreen({ onDone }: BootScreenProps) {
           </div>
           <div>
             <div className="text-sm font-bold tracking-tight text-text">HYPOTECHA</div>
-            <div className="text-[11px] font-mono text-text-muted">encumbrance os · power-on</div>
+            <div className="text-[11px] font-mono text-text-muted">universal registry · power-on</div>
           </div>
         </div>
 
@@ -101,6 +101,18 @@ export function BootScreen({ onDone }: BootScreenProps) {
             <span className="text-text-secondary">handshake · hedera testnet 0.0.296</span>
             {phase >= 1 && <span className="text-primary-light"> ✓ ok</span>}
           </motion.div>
+
+          {phase >= 1 && (
+            <motion.div
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.25, ease }}
+            >
+              <span className="text-text-muted">▸</span>{' '}
+              <span className="text-text-secondary">hcs topic 0.0.2947791 · subscribed</span>
+              {phase >= 2 && <span className="text-primary-light"> ✓ ok</span>}
+            </motion.div>
+          )}
 
           {phase >= 1 && (
             <div className="space-y-1.5 pt-1">
@@ -132,7 +144,7 @@ export function BootScreen({ onDone }: BootScreenProps) {
               className="pt-1.5 flex items-center gap-2"
             >
               <LockKeyhole className="w-3.5 h-3.5 text-primary-light" />
-              <span className="text-primary-light">guard armed · encumbrance live ✓</span>
+              <span className="text-primary-light">registry live · platforms synced ✓</span>
             </motion.div>
           )}
         </div>
