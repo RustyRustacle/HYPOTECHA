@@ -105,7 +105,15 @@ app.post('/registry/guard', async (req, res) => {
       requested: verdict.requested.toString(),
       shortfall: verdict.shortfall.toString(),
       code: verdict.code ?? null,
-      partition: verdict.partition
+      reason: verdict.reason ?? null,
+      partition: verdict.partition,
+      conflict: verdict.conflict
+        ? {
+            existingHoldId: verdict.conflict.existingHoldId,
+            existingClaimant: verdict.conflict.existingClaimant ?? null,
+            existingAmount: verdict.conflict.existingAmount.toString()
+          }
+        : null
     };
 
     if (!verdict.ok) {
