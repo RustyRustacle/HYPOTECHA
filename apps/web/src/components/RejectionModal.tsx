@@ -2,16 +2,36 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { TriangleAlert, X, ExternalLink, RotateCcw } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
+export type RejectionReason = 'over-pledge' | 'cross-instance'
+
 interface RejectionModalProps {
   isOpen: boolean
+  reason: RejectionReason
   requestedAmount: number
   availableAmount: number
+  heldOnInstance?: number
+  originPlatform?: string
+  conflictedPlatform?: string
   onClose: () => void
   onRetry: () => void
 }
 
-export function RejectionModal({ isOpen, requestedAmount, availableAmount, onClose, onRetry }: RejectionModalProps) {
+export function RejectionModal({
+  isOpen,
+  reason,
+  requestedAmount,
+  availableAmount,
+  heldOnInstance = 0,
+  originPlatform = 'Beta',
+  conflictedPlatform = 'Alpha',
+  onClose,
+  onRetry,
+}: RejectionModalProps) {
   const shortfall = Math.max(0, requestedAmount - availableAmount)
+  const isCross = reason === 'cross-instance'
+  const conflictId = isCross ? '#REGISTRY-001' : '#GUARD-001'
+  const subtitle = isCross ? 'registry projection · CONFLICT' : 'on-chain guard check · FAILED'
+  const heading = isCross ? 'Registry Conflict' : 'Transaction Rejected'
 
   return (
     <AnimatePresence>
@@ -48,8 +68,8 @@ export function RejectionModal({ isOpen, requestedAmount, availableAmount, onClo
                     <TriangleAlert className="w-5 h-5 text-danger" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-text">Transaction Rejected</h2>
-                    <p className="text-xs text-text-muted font-mono">on-chain guard check · FAILED</p>
+                    <h2 className="text-lg font-bold text-text">{heading}</h2>
+                    <p className="text-xs text-text-muted font-mono">{subtitle}</p>
                   </div>
                 </div>
                 <button
@@ -62,8 +82,10 @@ export function RejectionModal({ isOpen, requestedAmount, availableAmount, onClo
 
               <div className="glow-border rounded-2xl bg-danger/5 border border-danger/20 p-4 mb-5 relative">
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xs font-semibold text-danger uppercase tracking-wider">Over-Pledge Detected</span>
-                  <span className="text-[10px] font-mono text-danger/70">#GUARD-001</span>
+                  <span className={`text-xs font-semibold uppercase tracking-wider ${isCross ? 'text-danger' : 'text-danger'}`}>
+                    {isCross ? 'Cross-Platform Conflict' : 'Over-Pledge Detected'}
+                  </span>
+                  <span className="text-[10px] font-mono text-danger/70">{conflictId}</span>
                 </div>
                 <div className="space-y-2.5 text-sm">
                   <div className="flex justify-between items-center">
@@ -74,6 +96,12 @@ export function RejectionModal({ isOpen, requestedAmount, availableAmount, onClo
                     <span className="text-text-secondary">Available unencumbered</span>
                     <span className="font-mono font-semibold text-primary">{formatCurrency(availableAmount)}</span>
                   </div>
+                  {isCross && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-text-secondary">Held on {conflictedPlatform}</span>
+                      <span className="font-mono font-semibold text-warning">{formatCurrency(heldOnInstance)}</span>
+                    </div>
+                  )}
                   <div className="h-px bg-gradient-to-r from-transparent via-danger/40 to-transparent" />
                   <div className="flex justify-between items-center">
                     <span className="text-text-secondary">Shortfall</span>
@@ -83,8 +111,9 @@ export function RejectionModal({ isOpen, requestedAmount, availableAmount, onClo
               </div>
 
               <p className="text-sm text-text-secondary mb-6 leading-relaxed">
-                This request was rejected on-chain to prevent double-pledging of the same asset.
-                The amount exceeds the available unencumbered balance.
+                {isCross
+                  ? `This request came in on ${originPlatform}, but the registry already shows the asset encumbered on ${conflictedPlatform}. The shared on-chain ledger blocked it — so the same bond can never back two loans on two different platforms.`
+                  : 'This request was rejected on-chain to prevent double-pledging of the same asset. The amount exceeds the available unencumbered balance.'}
               </p>
 
               <div className="flex gap-3">
