@@ -1,22 +1,28 @@
 import { useState } from 'react'
 import { ChevronDown, BadgePlus, CircleCheckBig, RefreshCw, Landmark, ArrowRight } from 'lucide-react'
 import { PageHero } from '@/components/PageHero'
-import { RejectionModal } from '@/components/RejectionModal'
+import { RejectionModal, type RejectionReason } from '@/components/RejectionModal'
+import type { PlatformContext } from '@/components/PlatformLanes'
 import { formatCurrency, cn } from '@/lib/utils'
-import { mockAssets } from '@/data/mock'
+import { mockAssets, mockPlatforms, platformById } from '@/data/mock'
 
 interface CreateClaimProps {
   onNavigate: (page: string) => void
+  defaultPlatformId?: PlatformContext
 }
 
 type Status = 'idle' | 'pending' | 'success'
 
-export function CreateClaim({ onNavigate }: CreateClaimProps) {
+export function CreateClaim({ onNavigate, defaultPlatformId = 'registry' }: CreateClaimProps) {
   const [selectedAsset, setSelectedAsset] = useState(mockAssets[0])
+  const [selectedPlatform, setSelectedPlatform] = useState(
+    platformById(defaultPlatformId === 'registry' ? 'beta' : defaultPlatformId)
+  )
   const [claimantAddress, setClaimantAddress] = useState('')
   const [claimantName, setClaimantName] = useState('')
   const [amount, setAmount] = useState('')
   const [showRejection, setShowRejection] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState<RejectionReason>('over-pledge')
   const [status, setStatus] = useState<Status>('idle')
 
   const amountNum = parseFloat(amount) || 0
@@ -27,8 +33,16 @@ export function CreateClaim({ onNavigate }: CreateClaimProps) {
   const projectedHeld = selectedAsset.totalHeld + (overPledge ? 0 : amountNum)
   const projectedAvailable = Math.max(0, selectedAsset.availableBalance - (overPledge ? 0 : amountNum))
 
+  const assetPlatforms = mockPlatforms.map((p) => ({
+    ...p,
+    held: selectedAsset.claims
+      .filter((c) => c.status === 'Active' && c.platformId === p.id)
+      .reduce((s, c) => s + c.amount, 0),
+  }))
+
   const handleSubmit = () => {
     if (overPledge) {
+      setRejectionReason(selectedPlatform.id === 'alpha' ? 'over-pledge' : 'cross-instance')
       setShowRejection(true)
       return
     }
@@ -49,9 +63,9 @@ export function CreateClaim({ onNavigate }: CreateClaimProps) {
       <div className="-mt-6">
         <PageHero
           badge="New Encumbrance"
-        title="Pledge a"
-        accent="Claim"
-        subtitle="Guard a portion of an asset as collateral. If it exceeds the free balance, the chain rejects it — automatically."
+        title="Register a"
+        accent="Pledge"
+        subtitle="Guard a portion of an asset as collateral. The shared ledger checks the global projection across every platform — and rejects any conflict automatically."
         media={{ kind: 'video', src: '/app-bg/pledge.mp4', opacity: 50 }}
       />
       </div>
@@ -67,8 +81,8 @@ export function CreateClaim({ onNavigate }: CreateClaimProps) {
                 <BadgePlus className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-text">Create Encumbrance</h2>
-                <p className="text-xs text-text-muted">Guard remains until released</p>
+                <h2 className="text-lg font-bold text-text">Register Encumbrance</h2>
+                <p className="text-xs text-text-muted">A record is published to the shared registry</p>
               </div>
             </div>
 
@@ -103,6 +117,27 @@ export function CreateClaim({ onNavigate }: CreateClaimProps) {
                   {mockAssets.map((asset) => (
                     <option key={asset.address} value={asset.address}>
                       {asset.name} ({asset.symbol}) — Available {formatCurrency(asset.availableBalance)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Origin platform */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-medium text-text-secondary mb-2">
+                Origin Platform
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedPlatform.id}
+                  onChange={(e) => setSelectedPlatform(platformById(e.target.value))}
+                  className="w-full appearance-none bg-black/30 border border-white/10 rounded-xl px-4 py-3 pr-10 text-sm text-text focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                >
+                  {mockPlatforms.map((platform) => (
+                    <option key={platform.id} value={platform.id}>
+                      {platform.name} · {platform.operator}
                     </option>
                   ))}
                 </select>
@@ -180,12 +215,12 @@ export function CreateClaim({ onNavigate }: CreateClaimProps) {
               />
               {overPledge ? (
                 <p className="text-xs text-danger mt-1.5 flex items-center gap-1.5">
-                  Exceeds available — this request will be rejected on-chain by the encumbrance guard.
+                  Exceeds available or already held on another platform — the registry will reject this.
                 </p>
               ) : (
                 amountNum > 0 && (
                   <p className="text-xs text-primary/80 mt-1.5 flex items-center gap-1.5">
-                    Within free balance — the guard will pass.
+                    Within the shared free balance — the registry will pass.
                   </p>
                 )
               )}
@@ -197,10 +232,11 @@ export function CreateClaim({ onNavigate }: CreateClaimProps) {
                   <CircleCheckBig className="w-5 h-5 text-primary" />
                 </span>
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold text-text">Encumbrance recorded on-chain</div>
+                  <div className="text-sm font-semibold text-text">Encumbrance registered on the shared ledger</div>
                   <div className="text-xs text-text-muted mt-1 leading-relaxed">
                     <span className="font-mono text-primary">{formatCurrency(amountNum)}</span> pledged to{' '}
-                    <span className="text-text-secondary">{claimantName}</span> on {selectedAsset.symbol}. Available now{' '}
+                    <span className="text-text-secondary">{claimantName}</span> on {selectedAsset.symbol}
+                    {' '}({selectedPlatform.name}). Available now{' '}
                     <span className="font-mono">{formatCurrency(projectedAvailable)}</span>.
                   </div>
                   <div className="mt-3 flex gap-2">
@@ -244,10 +280,10 @@ export function CreateClaim({ onNavigate }: CreateClaimProps) {
                   </>
                 ) : overPledge && amountNum > 0 ? (
                   <>
-                    <TriangleLabel /> Guard will reject
+                    <TriangleLabel /> Registry will reject
                   </>
                 ) : (
-                  'Create Claim'
+                  'Register Pledge'
                 )}
               </button>
             </div>
@@ -320,14 +356,39 @@ export function CreateClaim({ onNavigate }: CreateClaimProps) {
                 <span className="font-mono font-semibold text-primary">{formatCurrency(projectedAvailable)}</span>
               </div>
             </div>
+
+            <div className="mt-4 pt-3 border-t border-white/[0.07]">
+              <div className="text-[10px] uppercase tracking-[0.2em] text-text-muted mb-2">
+                Registry Projection · {selectedAsset.symbol}
+              </div>
+              <div className="space-y-1.5">
+                {assetPlatforms.map((p) => (
+                  <div
+                    key={p.id}
+                    className={cn(
+                      'flex items-center justify-between text-xs rounded-lg px-2.5 py-1.5',
+                      selectedPlatform.id === p.id
+                        ? 'bg-primary/[0.06] border border-primary/25'
+                        : 'bg-black/20 border border-white/[0.05]'
+                    )}
+                  >
+                    <span className="flex items-center gap-1.5 text-text-secondary">
+                      <span className={cn('w-1.5 h-1.5 rounded-full', p.held > 0 ? 'bg-warning' : 'bg-emerald-400/60')} />
+                      {p.name.replace('Platform ', '')} <span className="font-mono text-text-muted">[{p.id.toUpperCase()}]</span>
+                    </span>
+                    <span className="font-mono text-text">{formatCurrency(p.held)} held</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="liquid-glass rounded-2xl p-5">
-            <h3 className="text-sm font-semibold text-text mb-3">How the guard works</h3>
+            <h3 className="text-sm font-semibold text-text mb-3">How the registry checks</h3>
             <div className="space-y-2.5 text-xs text-text-secondary leading-relaxed">
-              <p className="flex gap-2"><span className="text-primary">1.</span> Balance checked against every active encumbrance.</p>
-              <p className="flex gap-2"><span className="text-primary">2.</span> Request beyond the free balance is rejected on-chain.</p>
-              <p className="flex gap-2"><span className="text-primary">3.</span> Released claims restore available balance instantly.</p>
+              <p className="flex gap-2"><span className="text-primary">1.</span> The pledge is held on the origin platform via its token contract.</p>
+              <p className="flex gap-2"><span className="text-primary">2.</span> The shared ledger checks the global projection across every participating platform.</p>
+              <p className="flex gap-2"><span className="text-primary">3.</span> A conflict with any platform is rejected &amp; published to the HCS topic.</p>
             </div>
           </div>
         </div>
@@ -336,8 +397,12 @@ export function CreateClaim({ onNavigate }: CreateClaimProps) {
 
       <RejectionModal
         isOpen={showRejection}
+        reason={rejectionReason}
         requestedAmount={amountNum}
         availableAmount={selectedAsset.availableBalance}
+        heldOnInstance={selectedAsset.totalHeld}
+        originPlatform={selectedPlatform.name}
+        conflictedPlatform={platformById(selectedPlatform.id === 'alpha' ? 'beta' : 'alpha').name}
         onClose={() => setShowRejection(false)}
         onRetry={() => {
           setShowRejection(false)
