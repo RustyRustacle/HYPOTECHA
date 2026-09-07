@@ -90,7 +90,9 @@ export function EncumbranceBar({ asset, onPledge }: EncumbranceBarProps) {
               >
                 {hovered === claim.claimId && (
                   <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-[#0b1120] border border-white/15 rounded-lg px-3 py-1.5 text-xs whitespace-nowrap z-20 shadow-2xl">
-                    <div className="font-semibold text-text">{claim.claimantName}</div>
+                    <div className="font-semibold text-text">
+                      {claim.claimantName} <span className="font-mono text-text-muted">[{claim.platformId.toUpperCase()}]</span>
+                    </div>
                     <div className={cn('font-mono', style.text)}>{formatCurrency(claim.amount)}</div>
                   </div>
                 )}
@@ -123,7 +125,7 @@ export function EncumbranceBar({ asset, onPledge }: EncumbranceBarProps) {
               <div key={claim.claimId} className="flex items-center gap-1.5">
                 <span className={cn('w-2.5 h-2.5 rounded-full', segmentStyles[i % segmentStyles.length].dot)} />
                 <span className="text-text-secondary">{claim.claimantName}</span>
-                <span className="font-mono text-text-muted">{formatCurrency(claim.amount)}</span>
+                <span className="font-mono text-text-muted">[{claim.platformId.toUpperCase()}] {formatCurrency(claim.amount)}</span>
               </div>
             ))}
             <div className="flex items-center gap-1.5">
