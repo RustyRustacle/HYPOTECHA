@@ -1,11 +1,28 @@
+export interface Platform {
+  id: string
+  name: string
+  operator: string
+}
+
+export const mockPlatforms: Platform[] = [
+  { id: 'alpha', name: 'Platform Alpha', operator: 'Atlas Capital' },
+  { id: 'beta', name: 'Platform Beta', operator: 'Bayline Lending' },
+]
+
+export function platformById(id: string): Platform {
+  return mockPlatforms.find((p) => p.id === id) ?? mockPlatforms[0]
+}
+
 export interface EncumbranceClaim {
   claimId: string
+  holdId: string
   token: string
   tokenName: string
   obligor: string
   obligorName: string
   claimant: string
   claimantName: string
+  platformId: string
   amount: number
   status: 'Active' | 'Released' | 'Defaulted'
   createdAt: number
@@ -23,9 +40,12 @@ export interface TokenAsset {
   claims: EncumbranceClaim[]
 }
 
+export type EventType = 'HOLD_CREATED' | 'HOLD_RELEASED' | 'HOLD_EXECUTED' | 'CONFLICT_REJECTED'
+
 export interface LiveEvent {
   id: string
-  type: 'EncumbranceCreated' | 'EncumbranceReleased' | 'EncumbranceRejected' | 'EncumbranceDefaulted'
+  type: EventType
+  platformId: string
   tokenName: string
   claimantName: string
   amount: number
@@ -46,12 +66,14 @@ export const mockAssets: TokenAsset[] = [
     claims: [
       {
         claimId: '0x7a3f8b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a',
+        holdId: 'HOLD-0xA0001',
         token: '0x0000000000000000000000000000000000001234',
         tokenName: 'UST-123',
         obligor: '0x000000000000000000000000000000000000AAAA',
         obligorName: 'Company A',
         claimant: '0x000000000000000000000000000000000000BBBB',
         claimantName: 'Bank A',
+        platformId: 'alpha',
         amount: 600000,
         status: 'Active',
         createdAt: Date.now() / 1000 - 86400,
@@ -70,12 +92,14 @@ export const mockAssets: TokenAsset[] = [
     claims: [
       {
         claimId: '0x8b4c2e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d',
+        holdId: 'HOLD-0xB0002',
         token: '0x0000000000000000000000000000000000005678',
         tokenName: 'TCB-456',
         obligor: '0x000000000000000000000000000000000000CCCC',
         obligorName: 'Company B',
         claimant: '0x000000000000000000000000000000000000DDDD',
         claimantName: 'Bank C',
+        platformId: 'alpha',
         amount: 200000,
         status: 'Active',
         createdAt: Date.now() / 1000 - 43200,
@@ -104,12 +128,14 @@ export const mockAssets: TokenAsset[] = [
     claims: [
       {
         claimId: '0x0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e',
+        holdId: 'HOLD-0xC0003',
         token: '0x000000000000000000000000000000000000DEAD',
         tokenName: 'GLD-552',
         obligor: '0x0000000000000000000000000000000000001111',
         obligorName: 'Aurum Holdings',
         claimant: '0x000000000000000000000000000000000000EEEE',
         claimantName: 'Bank E',
+        platformId: 'beta',
         amount: 300000,
         status: 'Active',
         createdAt: Date.now() / 1000 - 21600,
@@ -128,12 +154,14 @@ export const mockAssets: TokenAsset[] = [
     claims: [
       {
         claimId: '0x1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2',
+        holdId: 'HOLD-0xD0004',
         token: '0x000000000000000000000000000000000000BEEF',
         tokenName: 'CRG-014',
         obligor: '0x0000000000000000000000000000000000002222',
         obligorName: 'Maritime Co.',
         claimant: '0x000000000000000000000000000000000000FFFF',
         claimantName: 'Port Lending',
+        platformId: 'beta',
         amount: 450000,
         status: 'Active',
         createdAt: Date.now() / 1000 - 7200,
@@ -146,12 +174,14 @@ export const mockAssets: TokenAsset[] = [
 export const mockAllClaims: EncumbranceClaim[] = [
   {
     claimId: '0x7a3f8b2c...',
+    holdId: 'HOLD-0xA0001',
     token: '0x...1234',
     tokenName: 'UST-123',
     obligor: '0x...AAAA',
     obligorName: 'Company A',
     claimant: '0x...BBBB',
     claimantName: 'Bank A',
+    platformId: 'alpha',
     amount: 600000,
     status: 'Active',
     createdAt: Date.now() / 1000 - 86400,
@@ -159,12 +189,14 @@ export const mockAllClaims: EncumbranceClaim[] = [
   },
   {
     claimId: '0x8b4c2e5f...',
+    holdId: 'HOLD-0xB0002',
     token: '0x...5678',
     tokenName: 'TCB-456',
     obligor: '0x...CCCC',
     obligorName: 'Company B',
     claimant: '0x...DDDD',
     claimantName: 'Bank C',
+    platformId: 'alpha',
     amount: 200000,
     status: 'Active',
     createdAt: Date.now() / 1000 - 43200,
@@ -172,12 +204,14 @@ export const mockAllClaims: EncumbranceClaim[] = [
   },
   {
     claimId: '0x9c5d3f6a...',
+    holdId: 'HOLD-0xE0005',
     token: '0x...1234',
     tokenName: 'UST-123',
     obligor: '0x...AAAA',
     obligorName: 'Company A',
     claimant: '0x...EEEE',
     claimantName: 'Bank D',
+    platformId: 'alpha',
     amount: 150000,
     status: 'Released',
     createdAt: Date.now() / 1000 - 172800,
@@ -185,12 +219,14 @@ export const mockAllClaims: EncumbranceClaim[] = [
   },
   {
     claimId: '0x0d1e2f3a...',
+    holdId: 'HOLD-0xC0003',
     token: '0x...DEAD',
     tokenName: 'GLD-552',
     obligor: '0x...1111',
     obligorName: 'Aurum Holdings',
     claimant: '0x...EEEE',
     claimantName: 'Bank E',
+    platformId: 'beta',
     amount: 300000,
     status: 'Active',
     createdAt: Date.now() / 1000 - 21600,
@@ -198,12 +234,14 @@ export const mockAllClaims: EncumbranceClaim[] = [
   },
   {
     claimId: '0x1f2a3b4c...',
+    holdId: 'HOLD-0xD0004',
     token: '0x...BEEF',
     tokenName: 'CRG-014',
     obligor: '0x...2222',
     obligorName: 'Maritime Co.',
     claimant: '0x...FFFF',
     claimantName: 'Port Lending',
+    platformId: 'beta',
     amount: 450000,
     status: 'Active',
     createdAt: Date.now() / 1000 - 7200,
@@ -214,44 +252,49 @@ export const mockAllClaims: EncumbranceClaim[] = [
 export const mockEvents: LiveEvent[] = [
   {
     id: '1',
-    type: 'EncumbranceCreated',
+    type: 'HOLD_CREATED',
+    platformId: 'alpha',
     tokenName: 'UST-123',
     claimantName: 'Bank A',
     amount: 600000,
-    timestamp: Date.now() / 1000 - 120,
+    timestamp: Date.now() / 1000 - 300,
     txHash: '0xabc123def456',
   },
   {
     id: '2',
-    type: 'EncumbranceRejected',
+    type: 'CONFLICT_REJECTED',
+    platformId: 'beta',
     tokenName: 'UST-123',
     claimantName: 'Bank B',
     amount: 500000,
-    timestamp: Date.now() / 1000 - 60,
+    timestamp: Date.now() / 1000 - 120,
     txHash: '0x789ghi012jkl',
-    detail: 'Exceeds available balance ($400,000)',
+    detail: 'Registry conflict · already held on Platform Alpha ($600,000)',
   },
   {
     id: '3',
-    type: 'EncumbranceCreated',
+    type: 'HOLD_CREATED',
+    platformId: 'beta',
     tokenName: 'UST-123',
     claimantName: 'Bank B',
     amount: 400000,
-    timestamp: Date.now() / 1000 - 30,
+    timestamp: Date.now() / 1000 - 60,
     txHash: '0x345mno678pqr',
   },
   {
     id: '4',
-    type: 'EncumbranceReleased',
+    type: 'HOLD_RELEASED',
+    platformId: 'alpha',
     tokenName: 'UST-123',
     claimantName: 'Bank D',
     amount: 150000,
-    timestamp: Date.now() / 1000 - 10,
+    timestamp: Date.now() / 1000 - 30,
     txHash: '0x901stu234vwx',
   },
   {
     id: '5',
-    type: 'EncumbranceCreated',
+    type: 'HOLD_CREATED',
+    platformId: 'beta',
     tokenName: 'GLD-552',
     claimantName: 'Bank E',
     amount: 300000,
