@@ -5,11 +5,18 @@
   "scripts": {
     "build": "hardhat compile",
     "test": "hardhat test",
-    "deploy:testnet": "hardhat run scripts/deploy.ts --network hederaTestnet"
+    "deploy:testnet": "hardhat run scripts/deploy.ts --network hederaTestnet",
+    "deploy:anchor": "hardhat run scripts/deploy.ts --network hederaTestnet",
+    "spike:ats": "hardhat run scripts/spike-ats.ts --network hederaTestnet",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "dotenv": "^16.4.0",
     "hardhat": "^2.22.0"
+  },
+  "dependencies": {
+    "@hashgraph/asset-tokenization-sdk": "^8.0.0",
+    "@hashgraph/sdk": "^2.81.0"
   }
 }
