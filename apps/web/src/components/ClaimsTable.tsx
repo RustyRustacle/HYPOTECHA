@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ArrowUpRight, CircleDot, LockKeyhole, RotateCcw } from 'lucide-react'
 import { formatCurrency, formatAddress, cn } from '@/lib/utils'
 import { useSectionReveal } from '@/lib/useSectionReveal'
-import type { EncumbranceClaim } from '@/data/mock'
+import { platformById, type EncumbranceClaim } from '@/data/mock'
 
 interface ClaimsTableProps {
   claims: EncumbranceClaim[]
@@ -47,7 +47,7 @@ export function ClaimsTable({ claims, onRelease }: ClaimsTableProps) {
     >
       <div className="px-6 py-5 border-b border-white/[0.07] flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-text">Encumbrance Claims</h3>
+          <h3 className="text-base font-semibold text-text">Registry Records</h3>
           <div className="flex items-center gap-2 text-xs text-text-muted mt-0.5">
             <CircleDot className="w-3 h-3 text-primary" />
             {activeCount} active · {claims.length} total
@@ -75,7 +75,7 @@ export function ClaimsTable({ claims, onRelease }: ClaimsTableProps) {
         <table className="w-full">
           <thead>
             <tr className="bg-black/25 border-b border-white/[0.07]">
-              {['Claim ID', 'Token', 'Obligor', 'Claimant', 'Amount', 'Status', 'Actions'].map((head) => (
+              {['Claim ID', 'Token', 'Obligor', 'Claimant', 'Platform', 'Amount', 'Status', 'Actions'].map((head) => (
                 <th
                   key={head}
                   className={cn(
@@ -126,6 +126,11 @@ export function ClaimsTable({ claims, onRelease }: ClaimsTableProps) {
                       <span className="text-sm text-text">{claim.claimantName}</span>
                     </div>
                   </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-raised border border-white/10 text-[11px] font-mono text-text-secondary">
+                      {platformById(claim.platformId).name.replace('Platform ', '')}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 text-right">
                     <span className="font-mono text-sm font-semibold text-text">{formatCurrency(claim.amount)}</span>
                   </td>
@@ -168,7 +173,7 @@ export function ClaimsTable({ claims, onRelease }: ClaimsTableProps) {
         <div className="px-6 py-16 text-center">
           <ArrowUpRight className="w-6 h-6 text-text-muted mx-auto mb-3" />
           <p className="text-sm text-text-secondary">No {filter === 'All' ? '' : filter.toLowerCase() + ' '}claims found</p>
-          <p className="text-xs text-text-muted mt-1">Create an encumbrance to guard an asset on-chain.</p>
+          <p className="text-xs text-text-muted mt-1">Register a pledge to guard an asset on the shared registry.</p>
         </div>
       )}
     </div>
