@@ -1,8 +1,10 @@
 export interface EncumbranceClaim {
   claimId: string;
+  holdId: string;
   token: string;
   obligor: string;
   claimant: string;
+  platformId: string;
   amount: string;
   status: 'active' | 'released' | 'defaulted';
   createdAt: string;
@@ -47,6 +49,7 @@ export async function createEncumbrance(payload: {
   token: string;
   obligor: string;
   claimant: string;
+  platformId: string;
   amount: string | number;
 }): Promise<{ message: string; claim: EncumbranceClaim }> {
   return request<{ message: string; claim: EncumbranceClaim }>('/api/encumbrances', {
