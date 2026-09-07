@@ -10,6 +10,7 @@ import { Claims } from '@/pages/Claims'
 import { CreateClaim } from '@/pages/CreateClaim'
 import { History } from '@/pages/History'
 import { BootScreen } from '@/components/BootScreen'
+import { useHashpack } from '@/lib/wallet'
 
 const ease = [0.4, 0, 0.2, 1] as const
 
@@ -51,8 +52,8 @@ export default function App() {
   const [launching, setLaunching] = useState(false)
   const [activePage, setActivePage] = useState('dashboard')
   const [platformContext, setPlatformContext] = useState<PlatformContext>('registry')
-  const [walletConnected, setWalletConnected] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const wallet = useHashpack()
 
   useEffect(() => {
     if (mobileOpen) {
@@ -80,7 +81,7 @@ export default function App() {
       case 'dashboard': return <Dashboard onNavigate={navigate} platformContext={platformContext} />
       case 'assets': return <Assets onNavigate={navigate} />
       case 'claims': return <Claims platformContext={platformContext} />
-      case 'create': return <CreateClaim onNavigate={navigate} defaultPlatformId={platformContext} />
+      case 'create': return <CreateClaim onNavigate={navigate} defaultPlatformId={platformContext} accountEvm={wallet.evmAddress} />
       case 'history': return <History platformContext={platformContext} />
       default: return <Dashboard onNavigate={navigate} platformContext={platformContext} />
     }
@@ -129,8 +130,10 @@ export default function App() {
             <Sidebar activePage={activePage} onNavigate={navigate} mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
             <div className="flex-1 flex flex-col overflow-hidden relative z-10">
               <Header
-                onConnectWallet={() => setWalletConnected(!walletConnected)}
-                connected={walletConnected}
+                onConnectWallet={() => (wallet.connected ? void wallet.disconnect() : void wallet.connect())}
+                connected={wallet.connected}
+                accountId={wallet.accountId}
+                evmAddress={wallet.evmAddress}
                 onBackToLanding={handleBackToLanding}
                 onOpenMobile={() => setMobileOpen(true)}
                 pageTitle={PAGE_TITLES[activePage] ?? 'Dashboard'}

@@ -1,19 +1,20 @@
-import { useState } from 'react'
-import { ChevronDown, BadgePlus, CircleCheckBig, RefreshCw, Landmark, ArrowRight } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { ChevronDown, BadgePlus, CircleCheckBig, RefreshCw, Landmark, ArrowRight, Wallet } from 'lucide-react'
 import { PageHero } from '@/components/PageHero'
 import { RejectionModal, type RejectionReason } from '@/components/RejectionModal'
 import type { PlatformContext } from '@/components/PlatformLanes'
-import { formatCurrency, cn } from '@/lib/utils'
+import { formatCurrency, formatAddress, cn } from '@/lib/utils'
 import { mockAssets, mockPlatforms, platformById } from '@/data/mock'
 
 interface CreateClaimProps {
   onNavigate: (page: string) => void
   defaultPlatformId?: PlatformContext
+  accountEvm?: string | null
 }
 
 type Status = 'idle' | 'pending' | 'success'
 
-export function CreateClaim({ onNavigate, defaultPlatformId = 'registry' }: CreateClaimProps) {
+export function CreateClaim({ onNavigate, defaultPlatformId = 'registry', accountEvm }: CreateClaimProps) {
   const [selectedAsset, setSelectedAsset] = useState(mockAssets[0])
   const [selectedPlatform, setSelectedPlatform] = useState(
     platformById(defaultPlatformId === 'registry' ? 'beta' : defaultPlatformId)
@@ -24,6 +25,12 @@ export function CreateClaim({ onNavigate, defaultPlatformId = 'registry' }: Crea
   const [showRejection, setShowRejection] = useState(false)
   const [rejectionReason, setRejectionReason] = useState<RejectionReason>('over-pledge')
   const [status, setStatus] = useState<Status>('idle')
+
+  useEffect(() => {
+    if (accountEvm && !claimantAddress) {
+      setClaimantAddress(accountEvm)
+    }
+  }, [accountEvm, claimantAddress])
 
   const amountNum = parseFloat(amount) || 0
   const overPledge = amountNum > selectedAsset.availableBalance
@@ -180,13 +187,26 @@ export function CreateClaim({ onNavigate, defaultPlatformId = 'registry' }: Crea
               </div>
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-2">Claimant Address</label>
-                <input
-                  type="text"
-                  value={claimantAddress}
-                  onChange={(e) => setClaimantAddress(e.target.value)}
-                  placeholder="0x…"
-                  className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={claimantAddress}
+                    onChange={(e) => setClaimantAddress(e.target.value)}
+                    placeholder="0x…"
+                    className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                  />
+                  {accountEvm && (
+                    <button
+                      type="button"
+                      onClick={() => setClaimantAddress(accountEvm)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-primary/10 border border-primary/25 text-[10px] font-mono text-primary hover:bg-primary/20 transition-colors"
+                      title="Use connected wallet address"
+                    >
+                      <Wallet className="w-3 h-3" />
+                      {formatAddress(accountEvm)}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 

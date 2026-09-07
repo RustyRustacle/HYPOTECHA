@@ -1,10 +1,12 @@
-import { Menu, Wallet, ChevronRight } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Menu, Wallet, ChevronRight, LogOut } from 'lucide-react'
+import { cn, formatAddress } from '@/lib/utils'
 import type { PlatformContext } from '@/components/PlatformLanes'
 
 interface HeaderProps {
   onConnectWallet: () => void
   connected: boolean
+  accountId?: string | null
+  evmAddress?: string | null
   onBackToLanding?: () => void
   onOpenMobile?: () => void
   pageTitle?: string
@@ -18,7 +20,7 @@ const PLATFORM_OPTIONS: { id: PlatformContext; label: string }[] = [
   { id: 'beta', label: 'Beta' },
 ]
 
-export function Header({ onConnectWallet, connected, onBackToLanding, onOpenMobile, pageTitle = 'Dashboard', platformContext = 'registry', onPlatformChange }: HeaderProps) {
+export function Header({ onConnectWallet, connected, accountId, evmAddress, onBackToLanding, onOpenMobile, pageTitle = 'Dashboard', platformContext = 'registry', onPlatformChange }: HeaderProps) {
   return (
     <header className="relative h-16 shrink-0 flex items-center justify-between gap-4 px-4 md:px-6 bg-[rgba(9,14,28,0.6)] backdrop-blur-2xl border-b border-white/[0.07]">
       <div className="flex items-center gap-3 min-w-0">
@@ -73,6 +75,7 @@ export function Header({ onConnectWallet, connected, onBackToLanding, onOpenMobi
 
         <button
           onClick={onConnectWallet}
+          title={accountId ?? undefined}
           className={cn(
             'px-4 md:px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2',
             connected
@@ -80,8 +83,8 @@ export function Header({ onConnectWallet, connected, onBackToLanding, onOpenMobi
               : 'liquid-glass liquid-cta liquid-glass-button'
           )}
         >
-          <Wallet className="w-4 h-4" strokeWidth={2} />
-          <span className="hidden sm:inline">{connected ? '0x1234…ABCD' : 'Connect Wallet'}</span>
+          {connected ? <LogOut className="w-4 h-4" strokeWidth={2} /> : <Wallet className="w-4 h-4" strokeWidth={2} />}
+          <span className="hidden sm:inline">{connected ? (evmAddress ? formatAddress(evmAddress) : '0x1234…ABCD') : 'Connect Wallet'}</span>
           <span className="sm:hidden">{connected ? '✓' : 'Connect'}</span>
         </button>
       </div>
