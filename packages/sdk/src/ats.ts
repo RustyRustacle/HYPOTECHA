@@ -9,7 +9,7 @@ export const ATS_TOKEN_ABI = [
   'function decimals() view returns (uint8)',
   // HoldFacet
   'function createHoldByPartition(bytes32, tuple(uint256 amount,uint256 expirationTimestamp,address escrow,address to,bytes data)) returns (uint256)',
-  'function releaseHoldByPartition(bytes32, uint256) returns (bool)'
+  'function releaseHoldByPartition(tuple(bytes32 partition,address tokenHolder,uint256 holdId), uint256 amount) returns (bool)'
 ] as const;
 
 export interface HoldRequest {
@@ -25,10 +25,12 @@ export interface HoldRequest {
 export class AtsToken {
   readonly address: string;
   private readonly contract: Contract;
+  private readonly mirrorBase?: string;
 
-  constructor(address: string, providerOrSigner: Provider | AbstractSigner) {
+  constructor(address: string, providerOrSigner: Provider | AbstractSigner, opts?: { mirrorBase?: string }) {
     this.address = getAddress(address);
     this.contract = new Contract(this.address, ATS_TOKEN_ABI, providerOrSigner);
+    this.mirrorBase = opts?.mirrorBase ? opts.mirrorBase.replace(/\/$/, '') : undefined;
   }
 
   static fromRpc(address: string, rpcUrl: string): AtsToken {
@@ -67,11 +69,31 @@ export class AtsToken {
       data: req.data ?? '0x'
     });
     await tx.wait();
-    return tx.hash;
+    const holdId = await this.#readHoldId(tx.hash);
+    return holdId ?? tx.hash;
   }
 
-  async releaseHoldByPartition(partition: string, holdId: bigint): Promise<string> {
-    const tx = await this.contract.releaseHoldByPartition(partition, holdId);
+  /** Read the uint256 holdId ABI output (bool,uint256) from the mirror contract result. */
+  async #readHoldId(txHash: string): Promise<string | undefined> {
+    if (!this.mirrorBase) return undefined;
+    try {
+      const res = await fetch(`${this.mirrorBase}/contracts/results/${txHash}`);
+      if (!res.ok) return undefined;
+      const body = (await res.json()) as { call_result?: string; result?: string };
+      const hex = body.call_result?.startsWith('0x') ? body.call_result.slice(2) : (body.call_result ?? '');
+      if (hex.length < 128) return undefined;
+      const holdId = BigInt(`0x${hex.slice(64, 128)}`);
+      return holdId > 0n ? holdId.toString() : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  async releaseHoldByPartition(op: { partition: string; tokenHolder: string; holdId: bigint }, amount: bigint): Promise<string> {
+    const tx = await this.contract.releaseHoldByPartition(
+      { partition: op.partition, tokenHolder: getAddress(op.tokenHolder), holdId: op.holdId },
+      amount
+    );
     await tx.wait();
     return tx.hash;
   }
