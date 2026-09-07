@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Landing } from '@/pages/Landing'
 import { Sidebar } from '@/components/Sidebar'
 import { Header } from '@/components/Header'
+import type { PlatformContext } from '@/components/PlatformLanes'
 import { Dashboard } from '@/pages/Dashboard'
 import { Assets } from '@/pages/Assets'
 import { Claims } from '@/pages/Claims'
@@ -28,7 +29,7 @@ const PAGE_TITLES: Record<string, string> = {
   dashboard: 'Dashboard',
   assets: 'Assets',
   claims: 'Claims',
-  create: 'New Claim',
+  create: 'Register Pledge',
   history: 'History',
 }
 
@@ -49,6 +50,7 @@ export default function App() {
   const [view, setView] = useState<'landing' | 'app'>('landing')
   const [launching, setLaunching] = useState(false)
   const [activePage, setActivePage] = useState('dashboard')
+  const [platformContext, setPlatformContext] = useState<PlatformContext>('registry')
   const [walletConnected, setWalletConnected] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -75,12 +77,12 @@ export default function App() {
 
   const renderPage = () => {
     switch (activePage) {
-      case 'dashboard': return <Dashboard onNavigate={navigate} />
+      case 'dashboard': return <Dashboard onNavigate={navigate} platformContext={platformContext} />
       case 'assets': return <Assets onNavigate={navigate} />
-      case 'claims': return <Claims />
-      case 'create': return <CreateClaim onNavigate={navigate} />
-      case 'history': return <History />
-      default: return <Dashboard onNavigate={navigate} />
+      case 'claims': return <Claims platformContext={platformContext} />
+      case 'create': return <CreateClaim onNavigate={navigate} defaultPlatformId={platformContext} />
+      case 'history': return <History platformContext={platformContext} />
+      default: return <Dashboard onNavigate={navigate} platformContext={platformContext} />
     }
   }
 
@@ -132,6 +134,8 @@ export default function App() {
                 onBackToLanding={handleBackToLanding}
                 onOpenMobile={() => setMobileOpen(true)}
                 pageTitle={PAGE_TITLES[activePage] ?? 'Dashboard'}
+                platformContext={platformContext}
+                onPlatformChange={setPlatformContext}
               />
               <main className="flex-1 overflow-y-auto px-6">
                 <AnimatePresence mode="wait">
