@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { TriangleAlert, X, ExternalLink, RotateCcw } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatAddress } from '@/lib/utils'
 
 export type RejectionReason = 'over-pledge' | 'cross-instance'
 
@@ -10,6 +10,11 @@ interface RejectionModalProps {
   requestedAmount: number
   availableAmount: number
   heldOnInstance?: number
+  shortfallAmount?: number
+  conflictCode?: string | null
+  existingHoldId?: string
+  existingClaimant?: string
+  existingAmount?: number
   originPlatform?: string
   conflictedPlatform?: string
   onClose: () => void
@@ -22,14 +27,18 @@ export function RejectionModal({
   requestedAmount,
   availableAmount,
   heldOnInstance = 0,
-  originPlatform = 'Beta',
+  shortfallAmount,
+  conflictCode,
+  existingHoldId,
+  existingClaimant,
+  existingAmount,
   conflictedPlatform = 'Alpha',
   onClose,
   onRetry,
 }: RejectionModalProps) {
-  const shortfall = Math.max(0, requestedAmount - availableAmount)
+  const shortfall = shortfallAmount ?? Math.max(0, requestedAmount - availableAmount)
   const isCross = reason === 'cross-instance'
-  const conflictId = isCross ? '#REGISTRY-001' : '#GUARD-001'
+  const conflictId = conflictCode ?? (isCross ? '#REGISTRY-001' : '#GUARD-001')
   const subtitle = isCross ? 'registry projection · CONFLICT' : 'on-chain guard check · FAILED'
   const heading = isCross ? 'Registry Conflict' : 'Transaction Rejected'
 
@@ -102,6 +111,22 @@ export function RejectionModal({
                       <span className="font-mono font-semibold text-warning">{formatCurrency(heldOnInstance)}</span>
                     </div>
                   )}
+                  {existingHoldId && (
+                    <>
+                      <div className="flex justify-between items-center">
+                        <span className="text-text-secondary">
+                          Existing hold{existingClaimant ? ` · ${formatAddress(existingClaimant)}` : ''}
+                        </span>
+                        <span className="font-mono text-warning/90">#{existingHoldId.slice(0, 12)}</span>
+                      </div>
+                      {existingAmount !== undefined && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-text-secondary">Already encumbered to that claimant</span>
+                          <span className="font-mono font-semibold text-warning">{formatCurrency(existingAmount)}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
                   <div className="h-px bg-gradient-to-r from-transparent via-danger/40 to-transparent" />
                   <div className="flex justify-between items-center">
                     <span className="text-text-secondary">Shortfall</span>
@@ -112,7 +137,7 @@ export function RejectionModal({
 
               <p className="text-sm text-text-secondary mb-6 leading-relaxed">
                 {isCross
-                  ? `This request came in on ${originPlatform}, but the registry already shows the asset encumbered on ${conflictedPlatform}. The shared on-chain ledger blocked it — so the same bond can never back two loans on two different platforms.`
+                  ? `The registry already shows this asset slice encumbered to the same lender${existingHoldId ? ` (hold #${existingHoldId.slice(0, 12)})` : ''}. The shared on-chain ledger blocked the duplicate — so the same bond can never back the same lender twice, on any platform.`
                   : 'This request was rejected on-chain to prevent double-pledging of the same asset. The amount exceeds the available unencumbered balance.'}
               </p>
 
