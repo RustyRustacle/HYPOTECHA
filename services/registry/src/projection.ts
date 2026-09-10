@@ -81,7 +81,23 @@ export class RegistryProjection {
       bucket.set(env.holder.toLowerCase(), current + activeDelta);
     }
 
-const record: HoldRecord = {
+    // For terminal ops (release/execute) flip the existing ACTIVE record with the
+    // same key in-place rather than appending a sibling.  This keeps exactly one
+    // record per lifecycle and prevents stale "active" ghosts in conflict lookups.
+    const existing =
+      (env.op === 'HOLD_RELEASED' || env.op === 'HOLD_EXECUTED')
+        ? this.records.find((r) => r.key === key && r.status === 'active')
+        : undefined;
+
+    if (existing) {
+      existing.status = status;
+      existing.op = env.op;
+      existing.consensusTs = env.consensusTs ?? existing.consensusTs;
+      existing.amount = amount;
+      return existing;
+    }
+
+    const record: HoldRecord = {
       key,
       op: env.op,
       status,
@@ -114,7 +130,7 @@ const record: HoldRecord = {
   /**
    * Find an ACTIVE encumbrance colliding with the same collateral slice
    * (token + holder + partition) and the same counterparty (claimant/platform).
-   * A matching live claim means the slice is already pledged to that lender —
+   * A matching live claim means the slice is already pledged to that lender Ã¢â‚¬â€
    * a re-pledge is a duplicate, regardless of available balance.
    */
   findActiveConflict(token: string, holder: string, partition: string, applicant?: string): HoldRecord | undefined {
@@ -140,7 +156,7 @@ const record: HoldRecord = {
       if (!byHolder.has(h)) byHolder.set(h, []);
       byHolder.get(h)!.push(r);
     }
-return [...byHolder.entries()].map(([h, holds]) => ({
+    return [...byHolder.entries()].map(([h, holds]) => ({
       holder: h,
       held: holds.reduce((s, r) => s + r.amount, 0n),
       activeHolds: holds
