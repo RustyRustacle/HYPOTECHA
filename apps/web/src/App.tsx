@@ -10,6 +10,7 @@ import { Claims } from '@/pages/Claims'
 import { CreateClaim } from '@/pages/CreateClaim'
 import { History } from '@/pages/History'
 import { BootScreen } from '@/components/BootScreen'
+import { ConnectGate } from '@/components/ConnectGate'
 import { useHashpack } from '@/lib/wallet'
 
 const ease = [0.4, 0, 0.2, 1] as const
@@ -50,6 +51,7 @@ const SECTION_ACCENTS: Record<string, string> = {
 export default function App() {
   const [view, setView] = useState<'landing' | 'app'>('landing')
   const [launching, setLaunching] = useState(false)
+  const [gating, setGating] = useState(false)
   const [activePage, setActivePage] = useState('dashboard')
   const [platformContext, setPlatformContext] = useState<PlatformContext>('registry')
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -67,6 +69,10 @@ export default function App() {
   const handleLaunchApp = () => setLaunching(true)
   const handleBootDone = () => {
     setLaunching(false)
+    setGating(true)
+  }
+  const handleGateDone = () => {
+    setGating(false)
     setView('app')
   }
   const handleBackToLanding = () => setView('landing')
@@ -161,6 +167,20 @@ export default function App() {
 
       <AnimatePresence>
         {launching && <BootScreen onDone={handleBootDone} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {gating && (
+          <ConnectGate
+            connected={wallet.connected}
+            evmAddress={wallet.evmAddress}
+            accountId={wallet.accountId}
+            connectionState={wallet.connectionState}
+            onConnect={() => void wallet.connect()}
+            onDisconnect={() => void wallet.disconnect()}
+            onDone={handleGateDone}
+          />
+        )}
       </AnimatePresence>
     </>
   )
