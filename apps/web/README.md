@@ -2,34 +2,34 @@
 
 Frontend for **Hypotheca**, the on-chain encumbrance enforcement layer for tokenized assets. This dashboard visualizes asset encumbrances, available balances, live claim events, and over-pledge rejections.
 
-Built with **React 18 + Vite + TypeScript + TailwindCSS v4**.
+Built with **React 19 + Vite + TypeScript + TailwindCSS v4**.
 
 ---
 
 ## Features
 
-- **Landing page** — full animated marketing site (mesh gradients, logo marquee, glassmorphism, scroll-reveal animations).
-- **Dashboard** — KPI cards (total held, active claims, available balance) and a live event stream.
-- **Assets** — list of tokenized assets with their encumbrance breakdown.
-- **Claims** — full claims table (active / released / defaulted) with encumbrance bars.
-- **Create Claim** — form to pledge a new claim against an asset.
-- **History** — audit view of all claim lifecycle events.
-- **Rejection modal** — highlights on-chain over-pledge rejections (the core demo moment).
+- **Landing page** – full animated marketing site (mesh gradients, logo marquee, glassmorphism, scroll-reveal animations).
+- **Dashboard** – KPI cards (total held, active claims, available balance) and a live event stream.
+- **Assets** – list of tokenized assets with their encumbrance breakdown.
+- **Claims** – full claims table (active / released / defaulted) with encumbrance bars.
+- **Create Claim** – form to pledge a new claim against an asset.
+- **History** – audit view of all claim lifecycle events.
+- **Rejection modal** – highlights on-chain over-pledge rejections (the core demo moment).
 
-> **Note:** All data is currently mock data (`src/data/mock.ts`). Contract and Mirror Node wiring is planned.
+> **Note:** The dashboard reads live data from the registry API, falling back to mock data (`src/data/mock.ts`) when services are offline.
 
 ---
 
 ## Tech Stack
 
-- **React 18** + **Vite**
+- **React 19** + **Vite**
 - **TypeScript**
 - **TailwindCSS v4**
-- **Framer Motion** — animation
-- **tsparticles** — particle backgrounds
-- **lottie-react** — Lottie animations
-- **lucide-react** / **@phosphor-icons/react** — icons
-- **oxlint** — linting
+- **Framer Motion** – animation
+- **tsparticles** – particle backgrounds
+- **lucide-react** – icons
+- **wagmi** + **viem** – EVM wallet connection (Hedera testnet, chain 296)
+- **oxlint** – linting
 
 ---
 
@@ -91,12 +91,14 @@ Serves `dist/` at `http://localhost:4173`. On Windows you can also run `start.ba
 
 ```
 apps/web
-├── public/                 # Static assets (backgrounds, coins, audio)
+├── public/                 # Static assets (backgrounds, scenes, coins)
 ├── src/
 │   ├── assets/             # Images / svg assets
 │   ├── components/         # UI components (Sidebar, Header, KPICard, ...)
+│   │   ├── create-claim/   # CreateClaim sub-components
+│   │   └── landing/        # Landing page sub-components
 │   ├── data/               # Mock data
-│   ├── lib/                # Utilities & hooks (sound, counters, typing)
+│   ├── lib/                # Utilities & hooks (api client, wallet, typing)
 │   ├── pages/              # Route views (Dashboard, Claims, ...)
 │   ├── App.tsx             # App shell & routing
 │   ├── main.tsx            # Entry point

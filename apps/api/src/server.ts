@@ -108,8 +108,8 @@ app.get('/api/assets', async (_req, res) => {
 app.get('/api/assets/:token/available-balance', async (req, res) => {
   try {
     const instance = await toInstance(req.params.token);
-    const holder = String(req.query.holder ?? signer?.address ?? '').toLowerCase();
-if (!holder) return res.status(400).json({ message: 'holder query param required' });
+const holder = String(req.query.holder ?? signer?.address ?? '').toLowerCase();
+    if (!holder) return res.status(400).json({ message: 'holder query param required' });
 
     const verdict = await makeVerdict(projection, instance.assetEvm, holder, 0n, rpcUrl);
     res.json({
@@ -259,8 +259,8 @@ app.post('/api/encumbrances', async (req, res) => {
               existingClaimant: verdict.conflict.existingClaimant ?? null,
               existingAmount: verdict.conflict.existingAmount.toString()
             }
-          : null
-});
+: null
+    });
     }
 
     let holdId: string | undefined;
@@ -313,9 +313,9 @@ app.post('/api/encumbrances', async (req, res) => {
 app.post('/api/encumbrances/:claimId/release', async (req, res) => {
   try {
     const hold = projection.find(req.params.claimId);
-    if (!hold || hold.status !== 'active') {
+if (!hold || hold.status !== 'active') {
       return res.status(404).json({ message: 'Active encumbrance not found' });
-}
+    }
 
     let atsReleaseTx: string | undefined;
     const isNumericHold = /^\d+$/.test(hold.key);

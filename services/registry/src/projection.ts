@@ -130,7 +130,7 @@ export class RegistryProjection {
   /**
    * Find an ACTIVE encumbrance colliding with the same collateral slice
    * (token + holder + partition) and the same counterparty (claimant/platform).
-   * A matching live claim means the slice is already pledged to that lender Ã¢â‚¬â€
+   * A matching live claim means the slice is already pledged to that lender —
    * a re-pledge is a duplicate, regardless of available balance.
    */
   findActiveConflict(token: string, holder: string, partition: string, applicant?: string): HoldRecord | undefined {
