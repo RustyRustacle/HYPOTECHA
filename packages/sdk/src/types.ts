@@ -1,7 +1,5 @@
 /** Envelope types for the universal encumbrance registry data bus (HCS). */
 
-export const ENVELOPE_VERSION = 1;
-
 /** Registry event operations published to the HCS data bus. */
 export const EVENT_OPS = {
   HOLD_CREATED: 'HOLD_CREATED',

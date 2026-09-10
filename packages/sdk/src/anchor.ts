@@ -1,4 +1,4 @@
-import { type AbstractSigner, Contract, JsonRpcProvider, type Provider, getAddress } from 'ethers';
+import { type AbstractSigner, Contract, type Provider, getAddress } from 'ethers';
 import type { AnchorInstance } from './types.js';
 
 /** Minimal RegistryAnchor ABI (read + owner ops). */
@@ -38,10 +38,6 @@ export class AnchorClient {
   constructor(address: string, providerOrSigner: Provider | AbstractSigner) {
     this.address = getAddress(address);
     this.contract = new Contract(this.address, ANCHOR_ABI, providerOrSigner);
-  }
-
-  static fromRpc(address: string, rpcUrl: string): AnchorClient {
-    return new AnchorClient(address, new JsonRpcProvider(rpcUrl));
   }
 
   async owner(): Promise<string> {

@@ -5,7 +5,6 @@ import {
   PrivateKey,
   Timestamp,
   TransactionId,
-  TopicMessageQuery,
   TopicMessageSubmitTransaction
 } from '@hashgraph/sdk';
 import type { Envelope } from './types.js';
@@ -90,9 +89,4 @@ export class HcsBus {
       content: Buffer.from(m.message, 'base64').toString('utf8')
     }));
   }
-}
-
-/** Subscriber utility used by the indexer/registry service. */
-export function newTopicQuery(topicId: string): TopicMessageQuery {
-  return new TopicMessageQuery().setTopicId(topicId);
 }
