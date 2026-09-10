@@ -175,6 +175,7 @@ export default function App() {
             connected={wallet.connected}
             evmAddress={wallet.evmAddress}
             accountId={wallet.accountId}
+            pairingString={wallet.pairingString}
             connectionState={wallet.connectionState}
             onConnect={() => void wallet.connect()}
             onDisconnect={() => void wallet.disconnect()}
