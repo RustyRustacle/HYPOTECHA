@@ -1,119 +1,80 @@
-import { useEffect, useState, useCallback } from 'react'
-import { HashConnect } from '@hashgraph/hashconnect'
-
-const APP_METADATA = {
-  name: 'Hypotheca',
-  description: 'On-chain encumbrance registry for tokenized assets',
-  icon: '/logo.png',
-  url: window.location.origin,
-}
+import { useCallback, useEffect } from 'react'
+import { useConnect, useConnection, useConnectors, useDisconnect, useReconnect } from 'wagmi'
 
 export type ConnectionState = 'Connecting' | 'Connected' | 'Disconnected' | 'Paired'
 
 /**
  * Long-zero EVM representation of a Hedera account id (0.0.<num>).
- * Sufficient for identifying the connected holder to the registry/API.
+ * A Hedera account maps directly to a long-zero address; an EOA/contract from
+ * another EVM chain keeps its own address as-is (used for the registry identity).
  */
 export function accountIdToEvm(accountId: string): string {
   const num = accountId.split('.').pop()
   return `0x${BigInt(num ?? '0').toString(16).padStart(40, '0').slice(-40)}`
 }
 
+/** Reverse of accountIdToEvm — only meaningful for long-zero (0x…<last 5 bytes>) addresses. */
+export function evmToAccountId(evm: string): string | null {
+  try {
+    const bn = BigInt(evm)
+    if (bn > BigInt(0xffffffffff)) return null
+    return `0.0.${bn}`
+  } catch {
+    return null
+  }
+}
+
 export interface WalletState {
   connected: boolean
   accountId: string | null
   evmAddress: string | null
-  pairingString: string | null
   connectionState: ConnectionState | null
   connect: () => Promise<void>
   disconnect: () => Promise<void>
 }
 
-export function useHashpack(): WalletState {
-  const [hashconnect] = useState(() => new HashConnect(false))
-  const [connected, setConnected] = useState(false)
-  const [accountId, setAccountId] = useState<string | null>(null)
-  const [pairingString, setPairingString] = useState<string | null>(null)
-  const [connectionState, setConnectionState] = useState<ConnectionState | null>(null)
+export function useGeneralWallet(): WalletState {
+  const { address, isConnected, status } = useConnection()
+  const { connectAsync } = useConnect()
+  const { disconnectAsync } = useDisconnect()
+  const { reconnectAsync } = useReconnect()
+  const connectors = useConnectors()
 
   useEffect(() => {
-    let disposed = false
-
-    void (async () => {
-      try {
-        await hashconnect.init(APP_METADATA, 'testnet', false)
-
-        const saved = hashconnect.hcData.pairingData[0]
-        if (saved) {
-          await hashconnect.connect(saved.topic, APP_METADATA, saved.encryptionKey)
-        } else {
-          const pairing = await hashconnect.connect()
-          if (!disposed && pairing) setPairingString(pairing)
-        }
-      } catch {
-        // extension not available yet; lifecycle events will surface state
-      }
-    })()
-
-    hashconnect.pairingEvent.on((data) => {
-      if (disposed || data.accountIds.length === 0) return
-      setAccountId(data.accountIds[0])
-      setConnected(true)
-      setConnectionState('Paired')
-    })
-
-    hashconnect.connectionStatusChangeEvent.on((state) => {
-      if (disposed) return
-      setConnectionState(state)
-      if (state === 'Connected') {
-        const restored = hashconnect.hcData.pairingData[0]
-        if (restored?.accountIds.length) {
-          setAccountId(restored.accountIds[0])
-          setConnected(true)
-        }
-      }
-      if (state === 'Disconnected') {
-        setAccountId(null)
-        setConnected(false)
-      }
-    })
-
-    return () => {
-      disposed = true
-    }
-  }, [hashconnect])
+    // Re-attach to any previously authorized session on load.
+    void reconnectAsync().catch(() => {})
+  }, [reconnectAsync])
 
   const connect = useCallback(async () => {
-    const saved = hashconnect.hcData.pairingData[0]
-    if (saved) {
-      try {
-        await hashconnect.connect(saved.topic, APP_METADATA, saved.encryptionKey)
-      } catch {
-        // pairing restore failed; fall through to a fresh pairing
-      }
+    // Prefer the injected provider in-browser (Brave/Chrome wallet, MetaMask,
+    // etc). Fall back to any available connector if injected is missing.
+    const preferred = connectors.find((c) => c.id === 'injected')
+    const connector = preferred ?? connectors[0]
+    if (!connector) return
+    try {
+      await connectAsync({ connector })
+    } catch {
+      // user declined or no wallet; gate stays open
     }
-    await hashconnect.connect()
-    const pairing = hashconnect.hcData.pairingString
-    if (pairing) setPairingString(pairing)
-    hashconnect.connectToLocalWallet()
-  }, [hashconnect])
+  }, [connectAsync, connectors])
 
   const disconnect = useCallback(async () => {
     try {
-      await hashconnect.clearConnectionsAndData()
+      await disconnectAsync()
     } catch {
       // no-op
     }
-    setAccountId(null)
-    setConnected(false)
-  }, [hashconnect])
+  }, [disconnectAsync])
 
   return {
-    connected,
-    accountId,
-    evmAddress: accountId ? accountIdToEvm(accountId) : null,
-    pairingString,
-    connectionState,
+    connected: isConnected,
+    accountId: address ? evmToAccountId(address) : null,
+    evmAddress: address ?? null,
+    connectionState: isConnected
+      ? 'Connected'
+      : status === 'connecting'
+        ? 'Connecting'
+        : 'Disconnected',
     connect,
     disconnect,
   }
