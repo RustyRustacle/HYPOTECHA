@@ -23,6 +23,7 @@ export interface WalletState {
   connected: boolean
   accountId: string | null
   evmAddress: string | null
+  pairingString: string | null
   connectionState: ConnectionState | null
   connect: () => Promise<void>
   disconnect: () => Promise<void>
@@ -32,6 +33,7 @@ export function useHashpack(): WalletState {
   const [hashconnect] = useState(() => new HashConnect(false))
   const [connected, setConnected] = useState(false)
   const [accountId, setAccountId] = useState<string | null>(null)
+  const [pairingString, setPairingString] = useState<string | null>(null)
   const [connectionState, setConnectionState] = useState<ConnectionState | null>(null)
 
   useEffect(() => {
@@ -40,7 +42,14 @@ export function useHashpack(): WalletState {
     void (async () => {
       try {
         await hashconnect.init(APP_METADATA, 'testnet', false)
-        await hashconnect.connect()
+
+        const saved = hashconnect.hcData.pairingData[0]
+        if (saved) {
+          await hashconnect.connect(saved.topic, APP_METADATA, saved.encryptionKey)
+        } else {
+          const pairing = await hashconnect.connect()
+          if (!disposed && pairing) setPairingString(pairing)
+        }
       } catch {
         // extension not available yet; lifecycle events will surface state
       }
@@ -75,7 +84,18 @@ export function useHashpack(): WalletState {
   }, [hashconnect])
 
   const connect = useCallback(async () => {
-    await hashconnect.connectToLocalWallet()
+    const saved = hashconnect.hcData.pairingData[0]
+    if (saved) {
+      try {
+        await hashconnect.connect(saved.topic, APP_METADATA, saved.encryptionKey)
+      } catch {
+        // pairing restore failed; fall through to a fresh pairing
+      }
+    }
+    await hashconnect.connect()
+    const pairing = hashconnect.hcData.pairingString
+    if (pairing) setPairingString(pairing)
+    hashconnect.connectToLocalWallet()
   }, [hashconnect])
 
   const disconnect = useCallback(async () => {
@@ -92,6 +112,7 @@ export function useHashpack(): WalletState {
     connected,
     accountId,
     evmAddress: accountId ? accountIdToEvm(accountId) : null,
+    pairingString,
     connectionState,
     connect,
     disconnect,
