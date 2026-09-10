@@ -4,16 +4,10 @@ import { useConnect, useConnection, useConnectors, useDisconnect, useReconnect }
 export type ConnectionState = 'Connecting' | 'Connected' | 'Disconnected' | 'Paired'
 
 /**
- * Long-zero EVM representation of a Hedera account id (0.0.<num>).
- * A Hedera account maps directly to a long-zero address; an EOA/contract from
- * another EVM chain keeps its own address as-is (used for the registry identity).
+ * Reverse mapping from an EVM address to a Hedera account id — only meaningful
+ * for long-zero addresses (0x…<last 5 bytes>). EOA/contract addresses from other
+ * EVM chains stay as-is (used for the registry identity).
  */
-export function accountIdToEvm(accountId: string): string {
-  const num = accountId.split('.').pop()
-  return `0x${BigInt(num ?? '0').toString(16).padStart(40, '0').slice(-40)}`
-}
-
-/** Reverse of accountIdToEvm — only meaningful for long-zero (0x…<last 5 bytes>) addresses. */
 export function evmToAccountId(evm: string): string | null {
   try {
     const bn = BigInt(evm)

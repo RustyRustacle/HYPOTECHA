@@ -40,7 +40,7 @@ export interface TokenAsset {
   claims: EncumbranceClaim[]
 }
 
-export type EventType = 'HOLD_CREATED' | 'HOLD_RELEASED' | 'HOLD_EXECUTED' | 'CONFLICT_REJECTED'
+type EventType = 'HOLD_CREATED' | 'HOLD_RELEASED' | 'HOLD_EXECUTED' | 'CONFLICT_REJECTED'
 
 export interface LiveEvent {
   id: string

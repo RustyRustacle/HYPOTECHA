@@ -1,24 +1,11 @@
-export interface EncumbranceClaim {
-  claimId: string;
-  holdId: string;
-  token: string;
-  obligor: string;
-  claimant: string;
-  platformId: string;
-  amount: string;
-  status: 'active' | 'released' | 'defaulted';
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface EncumbranceBalance {
+interface EncumbranceBalance {
   token: string;
   totalBalance: string;
   totalHeld: string;
   availableBalance: string;
 }
 
-export interface ApiAsset {
+interface ApiAsset {
   id: string;
   platformId: string;
   name: string;
@@ -43,7 +30,7 @@ export interface ApiClaim {
   statusText?: string;
 }
 
-export interface ApiConflict {
+interface ApiConflict {
   existingHoldId?: string;
   existingClaimant?: string;
   existingAmount?: string;

@@ -2,7 +2,7 @@ import { defineChain } from 'viem'
 import { createConfig, http } from 'wagmi'
 import { injected, metaMask } from 'wagmi/connectors'
 
-export const hederaTestnet = defineChain({
+const hederaTestnet = defineChain({
   id: 296,
   name: 'Hedera Testnet',
   nativeCurrency: { name: 'HBAR', symbol: 'HBAR', decimals: 8 },
