@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Wallet, ShieldCheck, Loader2, LogOut, ArrowRight, Check } from 'lucide-react'
+import { Wallet, ShieldCheck, Loader2, LogOut, ArrowRight, Check, Copy, ExternalLink, QrCode } from 'lucide-react'
+import QRCode from 'qrcode'
 import { cn, formatAddress } from '@/lib/utils'
 
 interface ConnectGateProps {
   connected: boolean
   evmAddress?: string | null
   accountId?: string | null
+  pairingString?: string | null
   connectionState?: 'Connecting' | 'Connected' | 'Disconnected' | 'Paired' | null
   onConnect: () => void
   onDisconnect: () => void
@@ -15,16 +17,27 @@ interface ConnectGateProps {
 
 const ease = [0.32, 0.72, 0, 1] as const
 
-export function ConnectGate({ connected, evmAddress, accountId, connectionState, onConnect, onDisconnect, onDone }: ConnectGateProps) {
+export function ConnectGate({ connected, evmAddress, accountId, pairingString, connectionState, onConnect, onDisconnect, onDone }: ConnectGateProps) {
   const [ack, setAck] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
+    return () => { document.body.style.overflow = prev }
   }, [])
+
+  useEffect(() => {
+    if (!copied) return
+    const t = setTimeout(() => setCopied(false), 1600)
+    return () => clearTimeout(t)
+  }, [copied])
+
+  const [qrSrc, setQrSrc] = useState<string | null>(null)
+  useEffect(() => {
+    if (!pairingString || qrSrc) return
+    QRCode.toDataURL(pairingString, { width: 160, margin: 1, color: { dark: '#f8fafc', light: '#090e1c' } }).then(setQrSrc).catch(() => {})
+  }, [pairingString, qrSrc])
 
   const connecting = !connected && (connectionState === 'Connecting' || connectionState === 'Paired')
 
@@ -108,18 +121,73 @@ export function ConnectGate({ connected, evmAddress, accountId, connectionState,
               Continue
             </button>
           ) : (
-            <button
-              onClick={onConnect}
-              disabled={connecting}
-              className={cn(
-                'w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-300',
-                'liquid-glass liquid-cta liquid-glass-button',
-                connecting && 'opacity-70 pointer-events-none'
+            <>
+              <button
+                onClick={onConnect}
+                disabled={connecting}
+                className={cn(
+                  'w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-300',
+                  'liquid-glass liquid-cta liquid-glass-button',
+                  connecting && 'opacity-70 pointer-events-none'
+                )}
+              >
+                {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
+                {connecting ? 'Waiting for HashPack…' : 'Open HashPack'}
+              </button>
+
+              {pairingString && (
+                <>
+                  <div className="relative py-2">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-white/[0.07]" />
+                    </div>
+                    <div className="relative flex justify-center text-[10px]">
+                      <span className="bg-background/80 px-2 text-text-muted font-mono">or scan QR / copy pairing string</span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl liquid-glass border border-white/[0.07] p-4 flex flex-col items-center gap-3">
+                    {qrSrc && (
+                      <div className="rounded-xl overflow-hidden bg-background/60 p-2">
+                        <img src={qrSrc} alt="HashPack pairing QR" className="w-[160px] h-[160px] block" />
+                      </div>
+                    )}
+
+                    {!qrSrc && pairingString && (
+                      <div className="w-[160px] h-[160px] rounded-xl liquid-glass flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 text-text-muted animate-spin" />
+                      </div>
+                    )}
+
+                    <div className="w-full">
+                      <div className="text-[10px] text-text-muted mb-1.5 font-mono flex items-center gap-1">
+                        <QrCode className="w-3 h-3" />
+                        pairing string
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (!pairingString) return
+                          navigator.clipboard.writeText(pairingString).catch(() => {})
+                          setCopied(true)
+                        }}
+                        className="w-full rounded-xl liquid-glass border border-white/[0.07] px-3 py-2.5 text-left font-mono text-[11px] text-text-secondary hover:border-primary/30 transition-colors group"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="break-all line-clamp-3 select-all">{pairingString}</span>
+                          <span className="shrink-0 text-[10px] text-text-muted group-hover:text-primary flex flex-col items-center gap-0.5">
+                            {copied ? <Check className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
+                          </span>
+                        </div>
+                      </button>
+                    </div>
+
+                    <p className="text-[10px] text-text-muted text-center leading-relaxed">
+                      Open HashPack → tap <b>Scan / Connect</b> → scan this QR or paste the string above.
+                    </p>
+                  </div>
+                </>
               )}
-            >
-              {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" />}
-              {connecting ? 'Waiting for HashPack…' : 'Connect Wallet'}
-            </button>
+            </>
           )}
 
           {connected && (
