@@ -1,142 +1,19 @@
-import { useState, useEffect, useRef, type ReactNode } from 'react'
+import { useState, useEffect } from 'react'
 import { FloatingCoins } from '@/components/FloatingCoins'
 import { ParticlesBackground } from '@/components/ParticlesBackground'
 import { SectionBackground } from '@/components/SectionBackground'
 import { LiveTicker } from '@/components/LiveTicker'
+import { BenefitRow } from '@/components/landing/BenefitRow'
+import { EventLog as LandingEventLog } from '@/components/landing/EventLog'
+import { FeatureCard } from '@/components/landing/FeatureCard'
+import { SectionLabel } from '@/components/landing/SectionLabel'
+import { StepCard } from '@/components/landing/StepCard'
+import { UseCaseCard } from '@/components/landing/UseCaseCard'
 import { useTyping } from '@/lib/useTyping'
+import { useSectionReveal } from '@/lib/useSectionReveal'
 
 interface LandingProps {
   onLaunchApp: () => void
-}
-
-function useSectionReveal(threshold = 0.15) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(false)
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true) }, { threshold, rootMargin: '0px 0px -40px 0px' })
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [threshold])
-  return { ref, visible }
-}
-
-function SectionLabel({ children }: { children: ReactNode }) {
-  return (
-    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full liquid-glass text-[11px] text-text-muted uppercase tracking-[0.2em] mb-5">
-      {children}
-    </div>
-  )
-}
-
-function FeatureCard({ icon, title, desc, accent, delay, featured, bars }: { icon: ReactNode; title: string; desc: string; accent: string; delay: string; featured?: boolean; bars?: number[] }) {
-  const { ref, visible } = useSectionReveal()
-  return (
-    <div ref={ref} className={`group relative liquid-glass rounded-2xl p-8 transition-all duration-500 overflow-hidden ${featured ? 'md:row-span-2 md:flex md:flex-col md:justify-center' : ''} ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`} style={{ transitionDelay: delay }}>
-      <div className={`absolute inset-0 bg-gradient-to-br ${accent} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-      <div className="relative z-10">
-        <div className="w-14 h-14 rounded-2xl bg-surface-raised border border-border/60 flex items-center justify-center text-2xl mb-6 group-hover:scale-110 group-hover:border-primary/30 transition-all duration-300">{icon}</div>
-        {featured && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/25 text-primary text-[11px] font-medium mb-4">
-            <span className="w-1 h-1 rounded-full bg-primary animate-pulse" /> Core Guard
-          </div>
-        )}
-        <h3 className="text-lg font-semibold text-text mb-3">{title}</h3>
-        <p className="text-sm text-text-secondary leading-relaxed">{desc}</p>
-        {featured ? (
-          <div className="mt-6 h-2 rounded-full bg-surface-raised overflow-hidden">
-            <div className="h-full w-3/5 bg-gradient-to-r from-primary to-info-light rounded-full" />
-          </div>
-        ) : (
-          bars && (
-            <div className="mt-6 flex items-end gap-1.5 h-10">
-              {bars.map((h, i) => (
-                <div key={i} className="w-2 mx-auto rounded-t-md bg-gradient-to-t from-primary/30 to-primary/70 transition-all duration-500 group-hover:from-primary/60 group-hover:to-info-light" style={{ height: `${h}%` }} />
-              ))}
-            </div>
-          )
-        )}
-      </div>
-    </div>
-  )
-}
-
-function BenefitRow({ icon, title, desc, delay }: { icon: ReactNode; title: string; desc: string; delay: string }) {
-  const { ref, visible } = useSectionReveal()
-  return (
-    <div ref={ref} className={`flex items-start gap-4 liquid-glass rounded-xl p-5 transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`} style={{ transitionDelay: delay }}>
-      <div className="w-10 h-10 rounded-xl bg-surface-raised border border-border/60 flex items-center justify-center shrink-0">{icon}</div>
-      <div>
-        <div className="text-sm font-semibold text-text mb-1">{title}</div>
-        <div className="text-xs text-text-secondary leading-relaxed">{desc}</div>
-      </div>
-    </div>
-  )
-}
-
-function EventLog({ events }: { events: { msg: string; type?: 'pass' | 'reject' | 'mint' | 'info' }[] }) {
-  const { ref, visible } = useSectionReveal(0.3)
-  const color = (t?: 'pass' | 'reject' | 'mint' | 'info') =>
-    t === 'pass' ? 'text-primary-light' : t === 'reject' ? 'text-danger' : t === 'mint' ? 'text-info-light' : 'text-text-secondary'
-  return (
-    <div ref={ref} className={`transition-opacity duration-500 text-left ${visible ? 'opacity-100' : 'opacity-0'}`}>
-      <div className="rounded-xl bg-black/40 border border-white/10 px-5 py-4 font-mono text-xs leading-7">
-        {events.map((e, i) => (
-          <div key={i} className="flex items-start gap-2 animate-fade-in-up" style={{ animationDelay: `${200 + i * 320}ms` }}>
-            <span className="text-text-muted select-none" aria-hidden>›</span>
-            <span className={color(e.type)}>{e.msg}</span>
-          </div>
-        ))}
-        <div className="flex items-center gap-2 animate-fade-in-up" style={{ animationDelay: `${200 + events.length * 320}ms` }}>
-          <span className="text-text-muted select-none" aria-hidden>›</span>
-          <span className="text-primary inline-block animate-pulse">▍</span>
-        </div>
-      </div>
-      <div className="flex items-center justify-center gap-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-        <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted">Every record verifiable on Hedera · HCS topic</span>
-      </div>
-    </div>
-  )
-}
-
-function StepCard({ step, title, desc, active, onClick }: { step: string; title: string; desc: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`relative transition-all duration-500 group text-center focus:outline-none ${active ? 'scale-[1.03]' : 'opacity-70 hover:opacity-100'}`}
-    >
-      <div className={`relative w-16 h-16 rounded-2xl liquid-glass border flex items-center justify-center font-mono font-bold text-lg mx-auto mb-6 transition-all duration-300 ${active ? 'border-primary/40 shadow-lg shadow-primary/20' : 'border-border/60 hover:border-primary/30'}`}>
-        <span className={active ? 'text-primary' : 'gradient-text'}>{step}</span>
-        <div className={`absolute inset-0 rounded-2xl ${active ? 'bg-primary/10 animate-pulse' : 'bg-primary/5 opacity-0 group-hover:opacity-100'} transition-opacity duration-300`} />
-        {active && <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary" />}
-      </div>
-      <h3 className="text-lg font-semibold text-text mb-3">{title}</h3>
-      <p className="text-sm text-text-secondary leading-relaxed max-w-xs mx-auto">{desc}</p>
-    </button>
-  )
-}
-
-function UseCaseCard({ image, name, desc, metric, sub, active, onClick }: { image: string; name: string; desc: string; metric: string; sub: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`liquid-glass rounded-xl group cursor-pointer text-left transition-all duration-300 focus:outline-none relative overflow-hidden ${active ? 'ring-1 ring-primary/50 border-primary/30' : ''}`}
-    >
-      <div className="relative h-24 shrink-0 overflow-hidden">
-        <img src={image} alt={name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0b1120] via-[#0b1120]/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-90" />
-        <span className={`absolute top-2 right-2 text-xs font-mono px-2 py-0.5 rounded-full backdrop-blur-md ${active ? 'bg-primary/25 text-primary-light border border-primary/30' : 'bg-black/40 text-text-muted border border-white/10'}`}>{metric}</span>
-      </div>
-      <div className="relative z-10 p-5 pt-3">
-        <div className="text-sm font-semibold text-text mb-1">{name}</div>
-        <div className="text-xs text-text-secondary leading-relaxed">{desc}</div>
-        <div className={`text-[10px] text-primary mt-2 font-medium transition-all duration-300 ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'}`}>{sub}</div>
-      </div>
-    </button>
-  )
 }
 
 export function Landing({ onLaunchApp }: LandingProps) {
@@ -423,7 +300,7 @@ export function Landing({ onLaunchApp }: LandingProps) {
                 <h4 className="text-xl font-semibold text-text mb-2">Mint a $1,000,000 treasury</h4>
                 <p className="text-sm text-text-secondary max-w-2xl mx-auto leading-relaxed">A treasury bond is turned into a digital token on Hedera in seconds. Ownership becomes a single, tamper-proof record — and it gets a shared registry identity that every platform can see.</p>
                 <div className="mt-8 max-w-xl mx-auto">
-                  <EventLog
+                  <LandingEventLog
                     events={[
                       { msg: 'MINT Treasury #123 @ ALPHA · $1,000,000', type: 'mint' },
                       { msg: 'OWNER Company A confirmed on-chain', type: 'mint' },
@@ -451,7 +328,7 @@ export function Landing({ onLaunchApp }: LandingProps) {
                 </div>
                 <p className="text-sm text-text-secondary max-w-2xl mx-auto leading-relaxed">Before anything is locked in, the registry checks the shared projection automatically. 60% of the asset now belongs to Bank A's claim on Alpha — when Bank B tries to pledge the same bond on Beta, the registry rejects it on the spot.</p>
                 <div className="mt-8 max-w-xl mx-auto">
-                  <EventLog
+                  <LandingEventLog
                     events={[
                       { msg: 'HOLD UST-123 @ ALPHA · BANK_A $600,000 → PASS', type: 'pass' },
                       { msg: 'HOLD UST-123 @ BETA · BANK_B $500,000 → CONFLICT #REGISTRY-001', type: 'reject' },
@@ -471,7 +348,7 @@ export function Landing({ onLaunchApp }: LandingProps) {
                 <h4 className="text-xl font-semibold text-text mb-2">Repay the loan → release the claim</h4>
                 <p className="text-sm text-text-secondary max-w-2xl mx-auto leading-relaxed">The moment the loan is settled, the hold is released and the full balance is free again on every platform. Borrowers, lenders, and regulators can look back at every decision — forever, on the shared ledger.</p>
                 <div className="mt-8 max-w-xl mx-auto">
-                  <EventLog
+                  <LandingEventLog
                     events={[
                       { msg: 'HOLD_RELEASED UST-123 @ ALPHA · BANK_A $600,000 → OK', type: 'pass' },
                       { msg: 'RELEASE published → HCS topic', type: 'info' },
