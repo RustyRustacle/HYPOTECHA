@@ -53,7 +53,7 @@ export class RegistrySync {
       }
     }
     let applied = 0;
-    for (const env of envelopes.reverse()) {
+    for (const env of envelopes) {
       this.projection.apply(env);
       this.lastApplied.add(env.consensusTs ?? '');
       applied++;
