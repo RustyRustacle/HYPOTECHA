@@ -11,7 +11,7 @@ import { CreateClaim } from '@/pages/CreateClaim'
 import { History } from '@/pages/History'
 import { BootScreen } from '@/components/BootScreen'
 import { ConnectGate } from '@/components/ConnectGate'
-import { useHashpack } from '@/lib/wallet'
+import { useGeneralWallet } from '@/lib/wallet'
 
 const ease = [0.4, 0, 0.2, 1] as const
 
@@ -55,7 +55,7 @@ export default function App() {
   const [activePage, setActivePage] = useState('dashboard')
   const [platformContext, setPlatformContext] = useState<PlatformContext>('registry')
   const [mobileOpen, setMobileOpen] = useState(false)
-  const wallet = useHashpack()
+  const wallet = useGeneralWallet()
 
   useEffect(() => {
     if (mobileOpen) {
@@ -175,7 +175,6 @@ export default function App() {
             connected={wallet.connected}
             evmAddress={wallet.evmAddress}
             accountId={wallet.accountId}
-            pairingString={wallet.pairingString}
             connectionState={wallet.connectionState}
             onConnect={() => void wallet.connect()}
             onDisconnect={() => void wallet.disconnect()}
