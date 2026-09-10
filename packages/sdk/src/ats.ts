@@ -1,6 +1,11 @@
 import { type AbstractSigner, Contract, JsonRpcProvider, type Provider, getAddress } from 'ethers';
 
 /** Minimal ERC-1400/diamond ABI: supply + hold operations (HoldFacet). */
+/** Hedera eth_estimateGas under-reports contract-call gas on the EVM bridge,
+ *  which makes default ethers gasLimit executions die with out-of-gas. Always
+ *  pass a generous explicit limit for ATS state-changing txs. */
+export const ATS_TX_GAS_LIMIT = 2_000_000n;
+
 export const ATS_TOKEN_ABI = [
   'function balanceOf(address) view returns (uint256)',
   'function totalSupply() view returns (uint256)',
@@ -67,7 +72,7 @@ export class AtsToken {
       escrow: req.escrow,
       to: req.to,
       data: req.data ?? '0x'
-    });
+    }, { gasLimit: ATS_TX_GAS_LIMIT });
     await tx.wait();
     const holdId = await this.#readHoldId(tx.hash);
     return holdId ?? tx.hash;
@@ -92,7 +97,8 @@ export class AtsToken {
   async releaseHoldByPartition(op: { partition: string; tokenHolder: string; holdId: bigint }, amount: bigint): Promise<string> {
     const tx = await this.contract.releaseHoldByPartition(
       { partition: op.partition, tokenHolder: getAddress(op.tokenHolder), holdId: op.holdId },
-      amount
+      amount,
+      { gasLimit: ATS_TX_GAS_LIMIT }
     );
     await tx.wait();
     return tx.hash;
