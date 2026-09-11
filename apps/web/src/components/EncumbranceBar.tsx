@@ -3,10 +3,10 @@ import { BadgePlus, CircleDot } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { useSectionReveal } from '@/lib/useSectionReveal'
 import { cn } from '@/lib/utils'
-import type { TokenAsset } from '@/data/mock'
+import type { AssetBarView } from '@/lib/registry'
 
 interface EncumbranceBarProps {
-  asset: TokenAsset
+  asset: AssetBarView
   onPledge?: () => void
 }
 
@@ -27,7 +27,7 @@ export function EncumbranceBar({ asset, onPledge }: EncumbranceBarProps) {
   }, [])
 
   const totalBalance = asset.totalBalance
-  const activeClaims = asset.claims.filter((c) => c.status === 'Active')
+  const activeClaims = asset.claims
   const heldPercent = (asset.totalHeld / totalBalance) * 100
   const width = (amount: number) => (mounted && visible ? `${(amount / totalBalance) * 100}%` : '0%')
 
@@ -44,19 +44,8 @@ export function EncumbranceBar({ asset, onPledge }: EncumbranceBarProps) {
       <div className="relative z-10">
         <div className="flex items-center justify-between gap-4 mb-5">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-white/15 shrink-0">
-              <div className="absolute inset-0 flex items-center justify-center text-primary font-bold text-sm bg-primary/10">
-                {asset.symbol.slice(0, 2).toUpperCase()}
-              </div>
-              {asset.img && (
-                <img
-                  src={asset.img}
-                  alt={asset.name}
-                  loading="lazy"
-                  onError={(e) => (e.currentTarget.style.display = 'none')}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-              )}
+            <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-white/15 shrink-0 bg-primary/10 flex items-center justify-center">
+              <span className="text-primary font-bold text-sm">{asset.symbol.slice(0, 2).toUpperCase()}</span>
             </div>
             <div className="min-w-0">
               <h3 className="text-[15px] font-semibold text-text truncate">{asset.name}</h3>
@@ -91,7 +80,7 @@ export function EncumbranceBar({ asset, onPledge }: EncumbranceBarProps) {
                 {hovered === claim.claimId && (
                   <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-[#0b1120] border border-white/15 rounded-lg px-3 py-1.5 text-xs whitespace-nowrap z-20 shadow-2xl">
                     <div className="font-semibold text-text">
-                      {claim.claimantName} <span className="font-mono text-text-muted">[{claim.platformId.toUpperCase()}]</span>
+                      {claim.claimantName} <span className="font-mono text-text-muted">[{asset.symbol}]</span>
                     </div>
                     <div className={cn('font-mono', style.text)}>{formatCurrency(claim.amount)}</div>
                   </div>
@@ -125,7 +114,7 @@ export function EncumbranceBar({ asset, onPledge }: EncumbranceBarProps) {
               <div key={claim.claimId} className="flex items-center gap-1.5">
                 <span className={cn('w-2.5 h-2.5 rounded-full', segmentStyles[i % segmentStyles.length].dot)} />
                 <span className="text-text-secondary">{claim.claimantName}</span>
-                <span className="font-mono text-text-muted">[{claim.platformId.toUpperCase()}] {formatCurrency(claim.amount)}</span>
+                <span className="font-mono text-text-muted">[{asset.symbol}] {formatCurrency(claim.amount)}</span>
               </div>
             ))}
             <div className="flex items-center gap-1.5">

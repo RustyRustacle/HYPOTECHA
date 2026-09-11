@@ -1,8 +1,8 @@
-import { Activity } from 'lucide-react'
+import { useMemo } from 'react'
+import { Activity, CircleAlert } from 'lucide-react'
 import { EventLog } from '@/components/EventLog'
 import { PageHero } from '@/components/PageHero'
-import type { PlatformContext } from '@/components/PlatformLanes'
-import { mockEvents } from '@/data/mock'
+import { HCS_TOPIC_ID, shapeEventRows, useEvents } from '@/lib/registry'
 
 const legend = [
   { label: 'HOLD_CREATED', dot: 'bg-primary', cls: 'text-primary border-primary/25 bg-primary/10' },
@@ -11,49 +11,52 @@ const legend = [
   { label: 'CONFLICT_REJECTED', dot: 'bg-danger', cls: 'text-danger border-danger/25 bg-danger/10' },
 ]
 
-interface HistoryProps {
-  platformContext?: PlatformContext
-}
-
-export function History({ platformContext = 'registry' }: HistoryProps) {
-  const scoped = platformContext !== 'registry'
-  const visible = scoped ? mockEvents.filter((e) => e.platformId === platformContext) : mockEvents
+export function History() {
+  const { events, error } = useEvents()
+  const rows = useMemo(() => shapeEventRows(events), [events])
 
   return (
     <div className="space-y-6">
       <div className="-mt-6">
         <PageHero
           badge="Audit · HCS Ledger"
-        title="On-Chain"
-        accent="History"
-        subtitle="The immutable audit trail of every hold and registry event, streamed from the shared HCS topic."
-        media={{ kind: 'video', src: '/app-bg/history.mp4', opacity: 46 }}
-        actions={
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full liquid-glass text-xs">
-            <Activity className="w-3.5 h-3.5 text-primary" />
-            <span className="font-mono text-text-secondary">{visible.length} events</span>
-          </div>
-        }
-      />
+          title="On-Chain"
+          accent="History"
+          subtitle="The immutable audit trail of every hold and registry event, streamed from the shared HCS topic."
+          media={{ kind: 'video', src: '/app-bg/history.mp4', opacity: 46 }}
+          actions={
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full liquid-glass text-xs">
+              <Activity className="w-3.5 h-3.5 text-primary" />
+              <span className="font-mono text-text-secondary">{rows.length} events</span>
+            </div>
+          }
+        />
       </div>
+
+      {error && (
+        <div className="rounded-xl bg-danger/10 border border-danger/30 p-3 flex items-start gap-2.5">
+          <CircleAlert className="w-4 h-4 text-danger shrink-0 mt-0.5" />
+          <p className="text-xs text-text-secondary leading-relaxed font-mono">{error}</p>
+        </div>
+      )}
 
       <div className="max-w-5xl space-y-6">
-      <div className="flex flex-wrap items-center gap-2">
-        {legend.map((item) => (
-          <span
-            key={item.label}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border ${item.cls}`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${item.dot}`} />
-            {item.label}
+        <div className="flex flex-wrap items-center gap-2">
+          {legend.map((item) => (
+            <span
+              key={item.label}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border ${item.cls}`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${item.dot}`} />
+              {item.label}
+            </span>
+          ))}
+          <span className="ml-auto text-[10px] uppercase tracking-[0.2em] text-text-muted font-mono">
+            source · hcs topic {HCS_TOPIC_ID}
           </span>
-        ))}
-        <span className="ml-auto text-[10px] uppercase tracking-[0.2em] text-text-muted font-mono">
-          source · hcs topic 0.0.2947791
-        </span>
-      </div>
+        </div>
 
-      <EventLog events={visible} maxHeight="max-h-[560px]" />
+        <EventLog events={rows.slice(0, 60)} maxHeight="max-h-[560px]" />
       </div>
     </div>
   )

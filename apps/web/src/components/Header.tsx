@@ -1,6 +1,5 @@
 import { Menu, Wallet, ChevronRight, LogOut } from 'lucide-react'
 import { cn, formatAddress } from '@/lib/utils'
-import type { PlatformContext } from '@/components/PlatformLanes'
 
 interface HeaderProps {
   onConnectWallet: () => void
@@ -10,17 +9,9 @@ interface HeaderProps {
   onBackToLanding?: () => void
   onOpenMobile?: () => void
   pageTitle?: string
-  platformContext?: PlatformContext
-  onPlatformChange?: (ctx: PlatformContext) => void
 }
 
-const PLATFORM_OPTIONS: { id: PlatformContext; label: string }[] = [
-  { id: 'registry', label: 'Registry' },
-  { id: 'alpha', label: 'Alpha' },
-  { id: 'beta', label: 'Beta' },
-]
-
-export function Header({ onConnectWallet, connected, accountId, evmAddress, onBackToLanding, onOpenMobile, pageTitle = 'Dashboard', platformContext = 'registry', onPlatformChange }: HeaderProps) {
+export function Header({ onConnectWallet, connected, accountId, evmAddress, onBackToLanding, onOpenMobile, pageTitle = 'Dashboard' }: HeaderProps) {
   return (
     <header className="relative h-16 shrink-0 flex items-center justify-between gap-4 px-4 md:px-6 bg-[rgba(9,14,28,0.6)] backdrop-blur-2xl border-b border-white/[0.07]">
       <div className="flex items-center gap-3 min-w-0">
@@ -51,23 +42,6 @@ export function Header({ onConnectWallet, connected, accountId, evmAddress, onBa
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
-        <div className="hidden lg:flex items-center gap-1 p-1 rounded-full liquid-glass" title="Platform context">
-          {PLATFORM_OPTIONS.map((opt) => (
-            <button
-              key={opt.id}
-              onClick={() => onPlatformChange?.(opt.id)}
-              className={cn(
-                'px-3 py-1.5 rounded-full text-[11px] font-medium transition-all duration-200',
-                platformContext === opt.id
-                  ? 'bg-primary/15 text-primary border border-primary/25'
-                  : 'text-text-secondary hover:text-text border border-transparent'
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-
         <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full liquid-glass text-[11px]">
           <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
           <span className="text-text-secondary font-mono">Hedera Testnet</span>

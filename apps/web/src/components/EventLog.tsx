@@ -1,13 +1,14 @@
-import { formatCurrency, formatTimeAgo, formatAddress, cn } from '@/lib/utils'
+import { formatCurrency, formatTimeAgo, cn } from '@/lib/utils'
 import { useSectionReveal } from '@/lib/useSectionReveal'
-import type { LiveEvent } from '@/data/mock'
+import type { EventOp } from '@/lib/hypotheca'
+import type { EventRow } from '@/lib/registry'
 
 interface EventLogProps {
-  events: LiveEvent[]
+  events: EventRow[]
   maxHeight?: string
 }
 
-const eventMeta: Record<LiveEvent['type'], { glyph: string; text: string }> = {
+const eventMeta: Record<EventOp, { glyph: string; text: string }> = {
   HOLD_CREATED: { glyph: '↑', text: 'text-primary-light' },
   HOLD_RELEASED: { glyph: '↓', text: 'text-info-light' },
   HOLD_EXECUTED: { glyph: '↓', text: 'text-warning-light' },
@@ -85,14 +86,7 @@ export function EventLog({ events, maxHeight = 'max-h-[520px]' }: EventLogProps)
                     <span>·</span>
                     <span>{formatTimeAgo(event.timestamp)}</span>
                     <span>·</span>
-                    <a
-                      href={`https://hashscan.io/testnet/transaction/${event.txHash}`}
-                      target="_blank"
-                      rel="noopener"
-                      className="font-mono text-info hover:underline"
-                    >
-                      {formatAddress(event.txHash)}
-                    </a>
+                    <span className="font-mono text-info">{event.id?.slice(0, 18)}</span>
                   </div>
                 </div>
               </div>

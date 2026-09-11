@@ -50,6 +50,59 @@ export type CreateEncumbranceResult =
       conflict?: ApiConflict | null;
     };
 
+export type EventOp = 'HOLD_CREATED' | 'HOLD_RELEASED' | 'HOLD_EXECUTED' | 'CONFLICT_REJECTED';
+
+export interface ApiEvent {
+  key: string;
+  op: EventOp;
+  status: string;
+  amount: string;
+  holder: string;
+  claimant: string;
+  to: string | null;
+  partition: string;
+  expiration: string | null;
+  consensusTs: string;
+  rejectedCode: string | null;
+  rejectedReason: string | null;
+  token: string;
+  asset: { id: string; name: string; entity: string } | null;
+}
+
+export interface ApiOverviewAsset {
+  id: string;
+  platformId: string;
+  name: string;
+  symbol: string;
+  operator: string;
+  faceValue: string;
+  entity: string;
+  evm: string;
+  maturityTs: string;
+  balance: string;
+  held: string;
+  available: string;
+  encumberedPct: number;
+}
+
+export interface ApiOverview {
+  holder: string;
+  totals: { faceValue: string; held: string; available: string; encumberedPct: number };
+  counts: { active: number; released: number; rejected: number; executed: number; totalRecords: number };
+  assets: ApiOverviewAsset[];
+  lastEvents: {
+    key: string;
+    op: EventOp;
+    status: string;
+    amount: string;
+    holder: string;
+    claimant: string;
+    consensusTs: string;
+    rejectedCode: string | null;
+    asset: { id: string; entity: string } | null;
+  }[];
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000';
 
 interface ApiResponse<T> {
@@ -94,11 +147,25 @@ export async function fetchClaims(token: string): Promise<ApiClaim[]> {
   return data.claims;
 }
 
+export async function fetchOverview(): Promise<ApiOverview> {
+  const { status, data } = await request<ApiOverview>('/api/overview');
+  if (status !== 200 || !data) throw new Error('overview unavailable');
+  return data;
+}
+
+export async function fetchEvents(params?: { asset?: string; status?: string }): Promise<ApiEvent[]> {
+  const q = new URLSearchParams();
+  if (params?.asset) q.set('asset', params.asset);
+  if (params?.status) q.set('status', params.status);
+  const { status, data } = await request<{ events: ApiEvent[] }>(`/api/events${q.size ? `?${q.toString()}` : ''}`);
+  if (status !== 200 || !data) throw new Error('events unavailable');
+  return data.events;
+}
+
 export async function createEncumbrance(payload: {
   token: string;
   holder?: string;
   claimant: string;
-  platformId: string;
   amount: string | number;
   partition?: string;
   materialize?: boolean;

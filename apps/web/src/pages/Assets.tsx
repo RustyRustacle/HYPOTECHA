@@ -1,17 +1,19 @@
-import { Coins, LockKeyhole, ArrowUpRight, Boxes } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Coins, LockKeyhole, ArrowUpRight, Boxes, CircleAlert } from 'lucide-react'
 import { EncumbranceBar } from '@/components/EncumbranceBar'
 import { PageHero } from '@/components/PageHero'
 import { useSectionReveal } from '@/lib/useSectionReveal'
 import { cn } from '@/lib/utils'
-import { mockAssets } from '@/data/mock'
+import { buildClaimsMap, shaperOverviewAssets, useOverview, type AssetBarView } from '@/lib/registry'
 
 interface AssetsProps {
   onNavigate: (page: string) => void
 }
 
-function AssetCard({ asset, onOpen }: { asset: (typeof mockAssets)[number]; onOpen: () => void }) {
+function AssetCard({ asset, onOpen }: { asset: AssetBarView; onOpen: () => void }) {
   const { ref, visible } = useSectionReveal<HTMLDivElement>(0.2)
-  const heldPct = (asset.totalHeld / asset.totalBalance) * 100
+  const totalBalance = asset.totalBalance
+  const heldPct = totalBalance > 0 ? (asset.totalHeld / totalBalance) * 100 : 0
 
   return (
     <div
@@ -29,26 +31,15 @@ function AssetCard({ asset, onOpen }: { asset: (typeof mockAssets)[number]; onOp
         <div className="flex items-center gap-3 mb-5">
           <div
             className={cn(
-              'relative w-12 h-12 rounded-2xl overflow-hidden border shrink-0',
+              'relative w-12 h-12 rounded-2xl overflow-hidden border shrink-0 bg-primary/10 flex items-center justify-center',
               asset.totalHeld > 0 ? 'border-primary/25' : 'border-white/10'
             )}
           >
-            <div className="absolute inset-0 flex items-center justify-center text-primary font-bold text-sm bg-surface-raised">
-              {asset.symbol.slice(0, 2).toUpperCase()}
-            </div>
-            {asset.img && (
-              <img
-                src={asset.img}
-                alt={asset.name}
-                loading="lazy"
-                onError={(e) => (e.currentTarget.style.display = 'none')}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-            )}
+            <span className="text-primary font-bold text-sm">{asset.symbol.slice(0, 2).toUpperCase()}</span>
           </div>
           <div className="min-w-0">
             <div className="text-sm font-semibold text-text truncate">{asset.name}</div>
-            <div className="text-xs font-mono text-text-muted">{asset.symbol}</div>
+            <div className="text-xs font-mono text-text-muted">{asset.symbol} · {asset.entity}</div>
           </div>
         </div>
 
@@ -57,7 +48,7 @@ function AssetCard({ asset, onOpen }: { asset: (typeof mockAssets)[number]; onOp
             <span className="flex items-center gap-1.5 text-text-secondary">
               <Coins className="w-3.5 h-3.5 text-text-muted" /> Total Balance
             </span>
-            <span className="font-mono font-semibold text-text">${asset.totalBalance.toLocaleString()}</span>
+            <span className="font-mono font-semibold text-text">${totalBalance.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="flex items-center gap-1.5 text-text-secondary">
@@ -97,21 +88,45 @@ function AssetCard({ asset, onOpen }: { asset: (typeof mockAssets)[number]; onOp
 }
 
 export function Assets({ onNavigate }: AssetsProps) {
+  const overview = useOverview()
+  const [bars, setBars] = useState<AssetBarView[]>([])
+
+  useEffect(() => {
+    if (!overview.data) return
+    let cancelled = false
+    buildClaimsMap().then((claimsMap) => {
+      if (cancelled) return
+      setBars(shaperOverviewAssets(overview.data!, claimsMap))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [overview.data])
+
+  const count = useMemo(() => overview.data?.assets.length ?? bars.length, [overview.data, bars])
+
   return (
     <div className="space-y-6">
       <div className="-mt-6">
         <PageHero
           badge="Issuer · Portfolio"
-        title="Tokenized"
-        accent="Assets"
-        subtitle="Every registered tokenized asset with its encumbrance status — total, held, and still free to pledge across all connected platforms."
-        media={{ kind: 'video', src: '/app-bg/assets.mp4', opacity: 55 }}
-      />
+          title="Tokenized"
+          accent="Assets"
+          subtitle="Every registered tokenized asset with its encumbrance status — total, held, and still free to pledge across all connected platforms."
+          media={{ kind: 'video', src: '/app-bg/assets.mp4', opacity: 55 }}
+        />
       </div>
 
+      {overview.error && !overview.data && (
+        <div className="rounded-xl bg-danger/10 border border-danger/30 p-3 flex items-start gap-2.5">
+          <CircleAlert className="w-4 h-4 text-danger shrink-0 mt-0.5" />
+          <p className="text-xs text-text-secondary leading-relaxed font-mono">{overview.error}</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {mockAssets.map((asset) => (
-          <AssetCard key={asset.address} asset={asset} onOpen={() => onNavigate('claims')} />
+        {bars.map((asset) => (
+          <AssetCard key={asset.id} asset={asset} onOpen={() => onNavigate('claims')} />
         ))}
       </div>
 
@@ -121,10 +136,10 @@ export function Assets({ onNavigate }: AssetsProps) {
             <h2 className="text-lg font-bold tracking-tight text-text">Detailed View</h2>
             <p className="text-xs text-text-muted mt-0.5">Encumbrance breakdown per claim, per asset</p>
           </div>
-          <span className="text-xs font-mono text-text-muted">{mockAssets.length} assets</span>
+          <span className="text-xs font-mono text-text-muted">{count} assets</span>
         </div>
-        {mockAssets.map((asset) => (
-          <EncumbranceBar key={asset.address} asset={asset} onPledge={() => onNavigate('create')} />
+        {bars.map((asset) => (
+          <EncumbranceBar key={asset.id} asset={asset} onPledge={() => onNavigate('create')} />
         ))}
       </div>
     </div>

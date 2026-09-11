@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Landing } from '@/pages/Landing'
 import { Sidebar } from '@/components/Sidebar'
 import { Header } from '@/components/Header'
-import type { PlatformContext } from '@/components/PlatformLanes'
 import { Dashboard } from '@/pages/Dashboard'
 import { Assets } from '@/pages/Assets'
 import { Claims } from '@/pages/Claims'
@@ -53,7 +52,6 @@ export default function App() {
   const [launching, setLaunching] = useState(false)
   const [gating, setGating] = useState(false)
   const [activePage, setActivePage] = useState('dashboard')
-  const [platformContext, setPlatformContext] = useState<PlatformContext>('registry')
   const [mobileOpen, setMobileOpen] = useState(false)
   const wallet = useGeneralWallet()
 
@@ -84,12 +82,12 @@ export default function App() {
 
   const renderPage = () => {
     switch (activePage) {
-      case 'dashboard': return <Dashboard onNavigate={navigate} platformContext={platformContext} />
+      case 'dashboard': return <Dashboard onNavigate={navigate} />
       case 'assets': return <Assets onNavigate={navigate} />
-      case 'claims': return <Claims platformContext={platformContext} />
-      case 'create': return <CreateClaim onNavigate={navigate} defaultPlatformId={platformContext} accountEvm={wallet.evmAddress} />
-      case 'history': return <History platformContext={platformContext} />
-      default: return <Dashboard onNavigate={navigate} platformContext={platformContext} />
+      case 'claims': return <Claims />
+      case 'create': return <CreateClaim onNavigate={navigate} accountEvm={wallet.evmAddress} />
+      case 'history': return <History />
+      default: return <Dashboard onNavigate={navigate} />
     }
   }
 
@@ -143,8 +141,6 @@ export default function App() {
                 onBackToLanding={handleBackToLanding}
                 onOpenMobile={() => setMobileOpen(true)}
                 pageTitle={PAGE_TITLES[activePage] ?? 'Dashboard'}
-                platformContext={platformContext}
-                onPlatformChange={setPlatformContext}
               />
               <main className="flex-1 overflow-y-auto px-6">
                 <AnimatePresence mode="wait">

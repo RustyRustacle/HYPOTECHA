@@ -3,9 +3,8 @@ import { ChevronDown, BadgePlus, CircleCheckBig, RefreshCw, ArrowRight, Wallet, 
 import { PageHero } from '@/components/PageHero'
 import { RejectionModal, type RejectionReason } from '@/components/RejectionModal'
 import { LivePreview, type AssetView, type HoldSlice } from '@/components/create-claim/LivePreview'
-import type { PlatformContext } from '@/components/PlatformLanes'
+import { OPERATOR_LABEL } from '@/lib/registry'
 import { formatCurrency, formatAddress, cn } from '@/lib/utils'
-import { mockAssets, mockPlatforms, platformById } from '@/data/mock'
 import {
   createEncumbrance,
   fetchAssets,
@@ -18,19 +17,15 @@ import {
 
 interface CreateClaimProps {
   onNavigate: (page: string) => void
-  defaultPlatformId?: PlatformContext
   accountEvm?: string | null
 }
 
 type Status = 'idle' | 'pending' | 'success'
 
-export function CreateClaim({ onNavigate, defaultPlatformId = 'registry', accountEvm }: CreateClaimProps) {
+export function CreateClaim({ onNavigate, accountEvm }: CreateClaimProps) {
   const [assets, setAssets] = useState<AssetView[] | null>(null)
   const [assetsError, setAssetsError] = useState<string | null>(null)
   const [selectedAsset, setSelectedAsset] = useState<AssetView | null>(null)
-  const [selectedPlatform, setSelectedPlatform] = useState(
-    platformById(defaultPlatformId === 'registry' ? 'beta' : defaultPlatformId)
-  )
   const [claimantAddress, setClaimantAddress] = useState('')
   const [claimantName, setClaimantName] = useState('')
   const [amount, setAmount] = useState('')
@@ -123,23 +118,6 @@ export function CreateClaim({ onNavigate, defaultPlatformId = 'registry', accoun
 
   const activeSlices = liveSlices.filter((s) => s.amount > 0)
 
-  useEffect(() => {
-    if (assets) return
-    const fallback = mockAssets.map((m) => ({
-      id: m.symbol,
-      evm: m.address,
-      name: m.name,
-      symbol: m.symbol,
-      decimals: 0,
-      faceValue: String(m.totalBalance),
-      real: false,
-    }))
-    if (fallback.length) {
-      setAssets(fallback)
-      setSelectedAsset((prev) => prev ?? fallback[0])
-    }
-  }, [assets])
-
   const amountNum = parseFloat(amount) || 0
   const hasBasics = Boolean(claimantAddress.trim()) && Boolean(claimantName.trim())
   const canSubmit = amountNum > 0 && hasBasics && status !== 'pending'
@@ -159,7 +137,6 @@ export function CreateClaim({ onNavigate, defaultPlatformId = 'registry', accoun
         token: selectedAsset.id,
         holder: holderAddress,
         claimant: claimantAddress.trim(),
-        platformId: selectedPlatform.id,
         amount: toTokenUnits(amountNum, decimals),
       }
       if (!base.holder) delete base.holder
@@ -271,32 +248,6 @@ export function CreateClaim({ onNavigate, defaultPlatformId = 'registry', accoun
                 </div>
               </div>
 
-              {/* Origin platform */}
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-text-secondary mb-2">
-                  Origin Platform
-                  {liveReal && (
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-primary/10 border border-primary/25 text-primary">
-                      on-chain
-                    </span>
-                  )}
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedPlatform.id}
-                    onChange={(e) => setSelectedPlatform(platformById(e.target.value))}
-                    className="w-full appearance-none bg-black/30 border border-white/10 rounded-xl px-4 py-3 pr-10 text-sm text-text focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
-                  >
-                    {mockPlatforms.map((platform) => (
-                      <option key={platform.id} value={platform.id}>
-                        {platform.name} · {platform.operator}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
-                </div>
-              </div>
-
               {/* Availability preview */}
               <div className="rounded-2xl bg-black/25 border border-white/10 p-4">
                 <div className="flex items-center justify-between text-sm mb-2.5">
@@ -326,6 +277,14 @@ export function CreateClaim({ onNavigate, defaultPlatformId = 'registry', accoun
                     )}
                   </span>
                 </div>
+              </div>
+
+              <div className="rounded-xl bg-surface-raised/40 border border-white/10 px-3.5 py-2.5 text-[11px] text-text-muted flex items-start gap-2">
+                <Wallet className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                <span>
+                  Pledges are recorded for <span className="text-text-secondary">{OPERATOR_LABEL}</span> as
+                  obligor{accountEvm ? <>, or your wallet <span className="font-mono text-primary/90">{formatAddress(accountEvm)}</span> when provided</> : <> — connect a wallet to pledge explicitly as yourself</>}.
+                </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -424,8 +383,8 @@ export function CreateClaim({ onNavigate, defaultPlatformId = 'registry', accoun
                     <div className="text-xs text-text-muted mt-1 leading-relaxed">
                       <span className="font-mono text-primary">{formatCurrency(amountNum)}</span> pledged to{' '}
                       <span className="text-text-secondary">{claimantName}</span> on {selectedAsset?.symbol}
-                      {' ('} {selectedPlatform.name}
-                      {').'} Available now <span className="font-mono">{formatCurrency(projectedAvailable)}</span>.
+                      {' via the on-chain registry.'} Available now{' '}
+                      <span className="font-mono">{formatCurrency(projectedAvailable)}</span>.
                     </div>
                     <div className="text-[10px] font-mono text-text-muted mt-1.5">
                       hold {createdClaim.holdId ?? 'pending'} · {createdClaim.statusText}
@@ -499,8 +458,8 @@ export function CreateClaim({ onNavigate, defaultPlatformId = 'registry', accoun
         availableAmount={rejection?.available ? Number(rejection.available) / divider : liveAvailable}
         shortfallAmount={rejection?.shortfall ? Number(rejection.shortfall) / divider : Math.max(0, amountNum - liveAvailable)}
         heldOnInstance={liveHeld}
-        originPlatform={selectedPlatform.name}
-        conflictedPlatform={mockPlatforms.find((p) => p.id !== selectedPlatform.id)?.name ?? 'another platform'}
+        originPlatform={selectedAsset?.symbol ?? 'the asset'}
+        conflictedPlatform="the shared registry"
         conflictCode={rejection?.code}
         existingHoldId={rejection?.conflict?.existingHoldId}
         existingClaimant={rejection?.conflict?.existingClaimant}

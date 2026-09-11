@@ -2,39 +2,43 @@ import { useState } from 'react'
 import { ArrowUpRight, CircleDot, LockKeyhole, RotateCcw } from 'lucide-react'
 import { formatCurrency, formatAddress, cn } from '@/lib/utils'
 import { useSectionReveal } from '@/lib/useSectionReveal'
-import { platformById, type EncumbranceClaim } from '@/data/mock'
+import type { ClaimRow, ClaimStatus } from '@/lib/registry'
 
 interface ClaimsTableProps {
-  claims: EncumbranceClaim[]
-  onRelease?: (claimId: string) => void
+  claims: ClaimRow[]
+  onRelease?: (row: ClaimRow) => Promise<void>
 }
 
-type ClaimStatus = EncumbranceClaim['status']
 type Filter = 'All' | ClaimStatus
 
-const filters: Filter[] = ['All', 'Active', 'Released', 'Defaulted']
+const filters: Filter[] = ['All', 'Active', 'Released', 'Rejected']
 
 const statusStyles: Record<ClaimStatus, { badge: string; dot: string; label: string }> = {
   Active: { badge: 'bg-primary/10 text-primary border-primary/25', dot: 'bg-primary', label: 'Locked' },
   Released: { badge: 'bg-surface-raised text-text-secondary border-white/10', dot: 'bg-text-muted', label: 'Released' },
-  Defaulted: { badge: 'bg-danger/10 text-danger border-danger/25', dot: 'bg-danger', label: 'Defaulted' },
+  Rejected: { badge: 'bg-danger/10 text-danger border-danger/25', dot: 'bg-danger', label: 'Rejected' },
 }
 
 export function ClaimsTable({ claims, onRelease }: ClaimsTableProps) {
   const [filter, setFilter] = useState<Filter>('All')
   const [pendingRelease, setPendingRelease] = useState<string | null>(null)
+  const [releaseError, setReleaseError] = useState<string | null>(null)
   const { ref, visible } = useSectionReveal<HTMLDivElement>(0.2)
 
   const filtered = filter === 'All' ? claims : claims.filter((c) => c.status === filter)
   const activeCount = claims.filter((c) => c.status === 'Active').length
 
-  const handleRelease = (claimId: string) => {
+  const handleRelease = async (row: ClaimRow) => {
     if (!onRelease) return
-    setPendingRelease(claimId)
-    setTimeout(() => {
-      onRelease(claimId)
+    setPendingRelease(row.key)
+    setReleaseError(null)
+    try {
+      await onRelease(row)
+    } catch (e) {
+      setReleaseError(String(e))
+    } finally {
       setPendingRelease(null)
-    }, 900)
+    }
   }
 
   return (
@@ -71,11 +75,17 @@ export function ClaimsTable({ claims, onRelease }: ClaimsTableProps) {
         </div>
       </div>
 
+      {releaseError && (
+        <div className="px-6 py-3 bg-danger/10 border-b border-danger/25 text-xs font-mono text-danger">
+          {releaseError}
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="bg-black/25 border-b border-white/[0.07]">
-              {['Claim ID', 'Token', 'Obligor', 'Claimant', 'Platform', 'Amount', 'Status', 'Actions'].map((head) => (
+              {['Hold ID', 'Token', 'Obligor', 'Claimant', 'Amount', 'Status', 'Actions'].map((head) => (
                 <th
                   key={head}
                   className={cn(
@@ -92,16 +102,16 @@ export function ClaimsTable({ claims, onRelease }: ClaimsTableProps) {
           <tbody>
             {filtered.map((claim) => {
               const style = statusStyles[claim.status]
-              const releasing = pendingRelease === claim.claimId
+              const releasing = pendingRelease === claim.key
               return (
                 <tr
-                  key={claim.claimId}
+                  key={claim.key}
                   className="group border-b border-white/[0.045] hover:bg-primary/[0.04] transition-colors"
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <LockKeyhole className="w-3 h-3 text-primary/50 group-hover:text-primary/90 transition-colors" />
-                      <span className="font-mono text-xs text-text-secondary">{formatAddress(claim.claimId)}</span>
+                      <span className="font-mono text-xs text-text-secondary">{formatAddress(claim.key)}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -126,11 +136,6 @@ export function ClaimsTable({ claims, onRelease }: ClaimsTableProps) {
                       <span className="text-sm text-text">{claim.claimantName}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-raised border border-white/10 text-[11px] font-mono text-text-secondary">
-                      {platformById(claim.platformId).name.replace('Platform ', '')}
-                    </span>
-                  </td>
                   <td className="px-6 py-4 text-right">
                     <span className="font-mono text-sm font-semibold text-text">{formatCurrency(claim.amount)}</span>
                   </td>
@@ -143,7 +148,7 @@ export function ClaimsTable({ claims, onRelease }: ClaimsTableProps) {
                   <td className="px-6 py-4 text-center">
                     {claim.status === 'Active' && onRelease && (
                       <button
-                        onClick={() => handleRelease(claim.claimId)}
+                        onClick={() => void handleRelease(claim)}
                         disabled={releasing}
                         className={cn(
                           'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border',
