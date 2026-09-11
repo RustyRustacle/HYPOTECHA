@@ -13,6 +13,8 @@ export interface HoldRecord {
   expiration?: bigint;
   consensusTs: string;
   status: 'active' | 'released' | 'executed' | 'rejected';
+  rejectedCode?: string;
+  rejectedReason?: string;
 }
 
 export interface HolderSummary {
@@ -109,7 +111,10 @@ export class RegistryProjection {
       partition: env.partition,
       amount,
       expiration: env.expiration ? BigInt(env.expiration) : undefined,
-      consensusTs: env.consensusTs ?? ''
+      consensusTs: env.consensusTs ?? '',
+      ...(env.op === 'CONFLICT_REJECTED'
+        ? { rejectedCode: env.rejectedCode, rejectedReason: env.rejectedReason }
+        : {})
     };
     this.records.unshift(record);
     return record;

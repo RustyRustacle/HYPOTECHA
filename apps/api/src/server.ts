@@ -72,12 +72,24 @@ async function toInstance(token: string) {
 app.use(cors());
 app.use(express.json());
 
-app.get('/health', (_req, res) => {
+app.get('/health', async (_req, res) => {
+  let instancesCount = 0;
+  try {
+    instancesCount = (await resolveInstances()).length;
+  } catch {
+    // keep 0 when the anchor is unreachable
+  }
+  const history = projection.history(1000);
+  const activeHeld = history.filter((h) => h.status === 'active').reduce((s, h) => s + h.amount, 0n);
   res.json({
     status: 'ok',
     service: 'hypotheca-api',
     registryEvents: projection.totalRecords,
     registrySyncError: sync.syncError ?? null,
+    lastSyncAt: sync.lastSyncAt ?? null,
+    activeHeld: activeHeld.toString(),
+    instances: instancesCount,
+    topic: topicId,
     timestamp: new Date().toISOString()
   });
 });
@@ -121,6 +133,131 @@ const holder = String(req.query.holder ?? signer?.address ?? '').toLowerCase();
     });
   } catch (error) {
     res.status(502).json({ message: `available balance failed: ${String(error)}` });
+  }
+});
+
+app.get('/api/overview', async (_req, res) => {
+  try {
+    const instances = await resolveInstances();
+    const holder = signer?.address.toLowerCase() ?? '';
+    const rows = [];
+    for (const i of instances) {
+      const ats = new AtsToken(i.assetEvm, provider);
+      let balance = 0n;
+      try {
+        balance = await ats.balanceOf(holder);
+      } catch {
+        // token unreachable -> treated as fully encumbered by ledger
+      }
+      const held = projection.totalHeld(i.assetEvm, holder);
+      const total = balance + held;
+      rows.push({
+        id: i.assetSymbol,
+        platformId: i.platformId,
+        name: i.assetName,
+        symbol: i.assetSymbol,
+        operator: i.operator,
+        faceValue: i.faceValue.toString(),
+        entity: `0.0.${i.assetDiamondEntity}`,
+        evm: i.assetEvm,
+        maturityTs: i.maturityTs.toString(),
+        balance: balance.toString(),
+        held: held.toString(),
+        available: balance.toString(),
+        encumberedPct: total > 0n ? Number((held * 10_000n) / total) / 100 : 0
+      });
+    }
+
+    const history = projection.history(1000);
+    const byEvm = new Map(instances.map((i) => [i.assetEvm.toLowerCase(), i]));
+    const totals = rows.reduce(
+      (acc, r) => ({
+        faceValue: acc.faceValue + BigInt(r.faceValue),
+        held: acc.held + BigInt(r.held),
+        available: acc.available + BigInt(r.available)
+      }),
+      { faceValue: 0n, held: 0n, available: 0n }
+    );
+
+    res.json({
+      holder,
+      totals: {
+        faceValue: totals.faceValue.toString(),
+        held: totals.held.toString(),
+        available: totals.available.toString(),
+        encumberedPct:
+          totals.faceValue > 0n ? Number((totals.held * 10_000n) / totals.faceValue) / 100 : 0
+      },
+      counts: {
+        active: history.filter((h) => h.status === 'active').length,
+        released: history.filter((h) => h.status === 'released').length,
+        rejected: history.filter((h) => h.status === 'rejected').length,
+        executed: history.filter((h) => h.status === 'executed').length,
+        totalRecords: projection.totalRecords
+      },
+      assets: rows,
+      lastEvents: history.slice(0, 8).map((h) => ({
+        key: h.key,
+        op: h.op,
+        status: h.status,
+        amount: h.amount.toString(),
+        holder: h.holder,
+        claimant: h.claimant,
+        consensusTs: h.consensusTs,
+        rejectedCode: h.rejectedCode ?? null,
+        asset: byEvm.get(h.token.toLowerCase())
+          ? {
+              id: byEvm.get(h.token.toLowerCase())!.assetSymbol,
+              entity: `0.0.${byEvm.get(h.token.toLowerCase())!.assetDiamondEntity}`
+            }
+          : null
+      }))
+    });
+  } catch (error) {
+    res.status(502).json({ message: `overview failed: ${String(error)}` });
+  }
+});
+
+app.get('/api/events', async (req, res) => {
+  try {
+    const instances = await resolveInstances();
+    const byEvm = new Map(instances.map((i) => [i.assetEvm.toLowerCase(), i]));
+    const asset = req.query.asset ? String(req.query.asset).toLowerCase() : undefined;
+    const status = req.query.status ? String(req.query.status) : undefined;
+    let events = projection.history(250).map((h) => {
+      const inst = h.token ? byEvm.get(h.token.toLowerCase()) : undefined;
+      return {
+        key: h.key,
+        op: h.op,
+        status: h.status,
+        amount: h.amount.toString(),
+        holder: h.holder,
+        claimant: h.claimant,
+        to: h.to ?? null,
+        partition: h.partition,
+        expiration: h.expiration?.toString() ?? null,
+        consensusTs: h.consensusTs,
+        rejectedCode: h.rejectedCode ?? null,
+        rejectedReason: h.rejectedReason ?? null,
+        token: h.token,
+        asset: inst
+          ? {
+              id: inst.assetSymbol,
+              name: inst.assetName,
+              entity: `0.0.${inst.assetDiamondEntity}`
+            }
+          : null
+      };
+    });
+    if (asset) {
+      events = events.filter(
+        (e) => e.asset?.id.toLowerCase() === asset || e.token?.toLowerCase() === asset
+      );
+    }
+    if (status) events = events.filter((e) => e.status === status);
+    res.json({ events });
+  } catch (error) {
+    res.status(502).json({ message: `events failed: ${String(error)}` });
   }
 });
 
@@ -266,11 +403,11 @@ app.post('/api/encumbrances', async (req, res) => {
     let holdId: string | undefined;
     if (parsed.data.materialize && signer) {
       const ats = new AtsToken(instance.assetEvm, signer, { mirrorBase });
-      holdId = await ats.createHoldByPartition({
+holdId = await ats.createHoldByPartition({
         partition: parsed.data.partition,
         amount: parsed.data.amount,
         expirationTimestamp: BigInt(instance.maturityTs),
-        escrow: parsed.data.claimant,
+        escrow: signer.address,
         to: parsed.data.claimant
       });
     }

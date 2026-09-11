@@ -21,6 +21,7 @@ export class RegistrySync {
   private timer?: ReturnType<typeof setInterval>;
   private lastApplied = new Set<string>();
   private lastError?: string;
+  private syncedAt?: string;
 
   constructor(config: RegistrySyncConfig, projection: RegistryProjection) {
     this.bus = new HcsBus({
@@ -37,6 +38,10 @@ export class RegistrySync {
 
   get syncError(): string | undefined {
     return this.lastError;
+  }
+
+  get lastSyncAt(): string | undefined {
+    return this.syncedAt;
   }
 
   /** One-shot poll: read recent topic messages and apply envelopes. */
@@ -59,6 +64,7 @@ export class RegistrySync {
       applied++;
     }
     this.lastError = undefined;
+    this.syncedAt = new Date().toISOString();
     return { applied, read: messages.length };
   }
 
