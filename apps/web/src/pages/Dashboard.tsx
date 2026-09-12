@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { LockKeyhole, ClipboardList, Coins, Network, BadgePlus, ArrowRight, CircleAlert } from 'lucide-react'
-import { useWalletClient } from 'wagmi'
 import { KPICard } from '@/components/KPICard'
 import { EncumbranceBar } from '@/components/EncumbranceBar'
 import { ClaimsTable } from '@/components/ClaimsTable'
@@ -20,13 +19,14 @@ import {
   type ClaimRow,
 } from '@/lib/registry'
 import { releaseEncumbrance } from '@/lib/hypotheca'
+import { useWalletSigner } from '@/lib/wallet'
 
 interface DashboardProps {
   onNavigate: (page: string) => void
 }
 
 export function Dashboard({ onNavigate }: DashboardProps) {
-  const { data: signer } = useWalletClient()
+  const { signer, isWrongChain } = useWalletSigner()
   const overview = useOverview()
   const eventsState = useEvents()
   const [bars, setBars] = useState<AssetBarView[]>([])
@@ -49,7 +49,15 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   const lanes = useMemo(() => shapeLanes(bars), [bars])
 
   const handleRelease = async (row: ClaimRow) => {
-    await releaseEncumbrance(row.key, signer, row.token)
+    if (!signer) {
+      throw new Error(
+        isWrongChain
+          ? 'Wallet connected but on the wrong network — switch to Hedera Testnet (chain 296) to broadcast the release.'
+          : 'Connect a wallet to broadcast the release.'
+      )
+    }
+    const res = await releaseEncumbrance(row.key, signer, row.token)
+    if (!res.ok) throw new Error(res.message)
     overview.refresh()
     eventsState.refresh()
   }

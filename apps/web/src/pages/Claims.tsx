@@ -1,14 +1,14 @@
 import { useMemo } from 'react'
 import { ClipboardList, CircleAlert } from 'lucide-react'
-import { useWalletClient } from 'wagmi'
 import { ClaimsTable } from '@/components/ClaimsTable'
 import { PageHero } from '@/components/PageHero'
 import { shapeClaimRows, useEvents, useOverview } from '@/lib/registry'
 import { releaseEncumbrance } from '@/lib/hypotheca'
+import { useWalletSigner } from '@/lib/wallet'
 import type { ClaimRow } from '@/lib/registry'
 
 export function Claims() {
-  const { data: signer } = useWalletClient()
+  const { signer, isWrongChain } = useWalletSigner()
   const overview = useOverview()
   const eventsState = useEvents()
   const claimRows = useMemo(
@@ -17,7 +17,15 @@ export function Claims() {
   )
 
   const handleRelease = async (row: ClaimRow) => {
-    await releaseEncumbrance(row.key, signer, row.token)
+    if (!signer) {
+      throw new Error(
+        isWrongChain
+          ? 'Wallet connected but on the wrong network — switch to Hedera Testnet (chain 296) to broadcast the release.'
+          : 'Connect a wallet to broadcast the release.'
+      )
+    }
+    const res = await releaseEncumbrance(row.key, signer, row.token)
+    if (!res.ok) throw new Error(res.message)
     overview.refresh()
     eventsState.refresh()
   }

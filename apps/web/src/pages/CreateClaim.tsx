@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ChevronDown, BadgePlus, CircleCheckBig, RefreshCw, ArrowRight, Wallet, CircleAlert } from 'lucide-react'
-import { useWalletClient } from 'wagmi'
 import { PageHero } from '@/components/PageHero'
 import { RejectionModal, type RejectionReason } from '@/components/RejectionModal'
 import { LivePreview, type AssetView, type HoldSlice } from '@/components/create-claim/LivePreview'
@@ -15,6 +14,7 @@ import {
   type ApiClaim,
   type CreateEncumbranceResult,
 } from '@/lib/hypotheca'
+import { useWalletSigner } from '@/lib/wallet'
 
 interface CreateClaimProps {
   onNavigate: (page: string) => void
@@ -24,7 +24,7 @@ interface CreateClaimProps {
 type Status = 'idle' | 'pending' | 'success'
 
 export function CreateClaim({ onNavigate, accountEvm }: CreateClaimProps) {
-  const { data: signer } = useWalletClient()
+  const { signer, isWrongChain, switchToHedera, switching } = useWalletSigner()
   const [assets, setAssets] = useState<AssetView[] | null>(null)
   const [assetsError, setAssetsError] = useState<string | null>(null)
   const [selectedAsset, setSelectedAsset] = useState<AssetView | null>(null)
@@ -135,6 +135,14 @@ export function CreateClaim({ onNavigate, accountEvm }: CreateClaimProps) {
 
   const handleSubmit = async () => {
     if (!canSubmit || !selectedAsset) return
+    if (!signer) {
+      setSubmitError(
+        isWrongChain
+          ? 'Wallet connected but on the wrong network — switch to Hedera Testnet (chain 296) in your wallet to broadcast the pledge on-chain.'
+          : 'Connect a wallet to broadcast the pledge on-chain.'
+      )
+      return
+    }
     setSubmitError(null)
     setStatus('pending')
     try {
@@ -214,6 +222,33 @@ export function CreateClaim({ onNavigate, accountEvm }: CreateClaimProps) {
                     EncumbranceLedger unreachable — showing a visual preview. Check the RPC and that
                     a platform is configured on the vault. <span className="font-mono text-warning/80">{assetsError}</span>
                   </p>
+                </div>
+              )}
+
+              {isWrongChain && !signer && (
+                <div className="rounded-xl bg-warning/15 border border-warning/40 p-3 flex items-start gap-2.5">
+                  <CircleAlert className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-text-secondary leading-relaxed">
+                      Wallet is connected but on the wrong network — switch to{' '}
+                      <span className="font-mono text-warning">Hedera Testnet (chain 296)</span> to broadcast the
+                      pledge on-chain.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => void switchToHedera()}
+                      disabled={switching}
+                      className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/25 text-[11px] font-semibold text-primary hover:bg-primary/20 transition-colors disabled:opacity-60"
+                    >
+                      {switching ? (
+                        <>
+                          <RefreshCw className="w-3 h-3 animate-spin" /> Switching…
+                        </>
+                      ) : (
+                        <>Switch to Hedera Testnet</>
+                      )}
+                    </button>
+                  </div>
                 </div>
               )}
 
