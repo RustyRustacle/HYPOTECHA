@@ -346,7 +346,10 @@ export function CreateClaim({ onNavigate, accountEvm }: CreateClaimProps) {
                       value={claimantAddress}
                       onChange={(e) => setClaimantAddress(e.target.value)}
                       placeholder="0x…"
-                      className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm text-text font-mono placeholder:text-text-muted focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                      className={cn(
+                        'w-full bg-black/30 border border-white/10 rounded-xl py-3 text-sm text-text font-mono placeholder:text-text-muted focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all',
+                        accountEvm ? 'pl-4 pr-32' : 'px-4'
+                      )}
                     />
                     {accountEvm && (
                       <button
