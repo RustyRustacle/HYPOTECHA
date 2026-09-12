@@ -15,7 +15,6 @@ Built for the ETHGlobal Hedera Bounty **"Tokenization of Anything"**.
   <img alt="React 19" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white&style=flat-square" />
   <img alt="Vite 8" src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white&style=flat-square" />
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white&style=flat-square" />
-  <img alt="Remotion 4" src="https://img.shields.io/badge/Remotion-4.0-FF7D00?style=flat-square" />
   <img alt="Hedera Testnet" src="https://img.shields.io/badge/Network-Hedera%20Testnet-0084FF?style=flat-square" />
   <img alt="Chain 296" src="https://img.shields.io/badge/Chain-296-0084FF?style=flat-square" />
   <img alt="Audit" src="https://img.shields.io/badge/Audit-0%20open%20findings-10B981?style=flat-square" />
@@ -40,7 +39,7 @@ Built for the ETHGlobal Hedera Bounty **"Tokenization of Anything"**.
   <tr>
     <td><b>2 live platforms</b> on chain 296 (SUKUK · GOLD)</td>
     <td><b>29 unit tests</b> · <b>0 open audit findings</b></td>
-    <td>Programmatic <b>Remotion</b> demo-video workspace in <code>apps/video</code></td>
+    <td>Static build — deploys to Vercel or any static host</td>
   </tr>
 </table>
 
@@ -210,7 +209,6 @@ Live E2E state (see `docs/AUDIT.md`): SUKUK deposits 340,000 · encumbered 100,0
 ```text
 HYPOTECHA/
 ├── apps/
-│   ├── video/                     # Remotion programmatic demo video (npm run dev / npm run render)
 │   └── web/                       # React + Vite dashboard (reads & writes the ledger)
 │       ├── src/lib/               # ledger.ts (ABI + reads/writes) · chainlink.ts · hypotheca.ts
 │       ├── src/components/        # EncumbranceBar · ChainlinkTicker · RejectionModal · …
