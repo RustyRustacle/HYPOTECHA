@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="apps/web/public/Hypotecha_Banner.png" width="100%" alt="HYPOTECHA — on-chain encumbrance enforcement for tokenized assets" />
+</div>
+
 # HYPOTECHA
 
 > **On-chain encumbrance enforcement for tokenized assets — double-pledging is structurally impossible.**
@@ -5,6 +9,42 @@
 Hypotheca is a permissionless enforcement layer on top of [Hedera Asset Tokenization Studio (ATS)](https://docs.hedera.com/hedera/open-source-solutions/asset-tokenization-studio-ats) that records partial claims/collateral against an asset's available balance and **enforces** them on-chain. Every credit line a bank draws against a tokenized asset is materialized as an ATS **hold locked inside an on-chain vault** — so the same unit can never back two loans, and over-pledging is rejected by the contract, not by an API.
 
 Built for the ETHGlobal Hedera Bounty **"Tokenization of Anything"**.
+
+<p align="center">
+  <img alt="Solidity 0.8.24" src="https://img.shields.io/badge/Solidity-0.8.24-363636?logo=solidity&logoColor=white&style=flat-square" />
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white&style=flat-square" />
+  <img alt="Vite 8" src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white&style=flat-square" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white&style=flat-square" />
+  <img alt="Remotion 4" src="https://img.shields.io/badge/Remotion-4.0-FF7D00?style=flat-square" />
+  <img alt="Hedera Testnet" src="https://img.shields.io/badge/Network-Hedera%20Testnet-0084FF?style=flat-square" />
+  <img alt="Chain 296" src="https://img.shields.io/badge/Chain-296-0084FF?style=flat-square" />
+  <img alt="Audit" src="https://img.shields.io/badge/Audit-0%20open%20findings-10B981?style=flat-square" />
+  <img alt="Tests" src="https://img.shields.io/badge/Tests-29%20passing-10B981?style=flat-square" />
+</p>
+
+### At a glance
+
+<div align="center">
+
+<table>
+  <tr>
+    <th>Enforcement</th>
+    <th>Pricing</th>
+    <th>Stack</th>
+  </tr>
+  <tr>
+    <td>Every pledge is an <b>ATS hold</b> locked inside the on-chain vault</td>
+    <td>Coverage &amp; health on <b>live Chainlink USD</b> feeds</td>
+    <td><b>No backend</b> — reads/writes directly from any EVM wallet</td>
+  </tr>
+  <tr>
+    <td><b>2 live platforms</b> on chain 296 (SUKUK · GOLD)</td>
+    <td><b>29 unit tests</b> · <b>0 open audit findings</b></td>
+    <td>Programmatic <b>Remotion</b> demo-video workspace in <code>apps/video</code></td>
+  </tr>
+</table>
+
+</div>
 
 ---
 
@@ -170,6 +210,7 @@ Live E2E state (see `docs/AUDIT.md`): SUKUK deposits 340,000 · encumbered 100,0
 ```text
 HYPOTECHA/
 ├── apps/
+│   ├── video/                     # Remotion programmatic demo video (npm run dev / npm run render)
 │   └── web/                       # React + Vite dashboard (reads & writes the ledger)
 │       ├── src/lib/               # ledger.ts (ABI + reads/writes) · chainlink.ts · hypotheca.ts
 │       ├── src/components/        # EncumbranceBar · ChainlinkTicker · RejectionModal · …
