@@ -1,233 +1,94 @@
 # HYPOTECHA
 
-Hypotheca is an on-chain encumbrance enforcement layer for tokenized assets. It records and enforces partial claims or collateral against an asset's available balance so a single tokenized position cannot be pledged beyond its real value.
+Hypotheca is an **on-chain encumbrance enforcement layer** for tokenized assets. It records and enforces partial claims/collateral against an asset's available balance so a single tokenized position can never be pledged beyond its real value — **double-pledging is structurally impossible**.
 
-The project is designed for Hedera Asset Tokenization Studio (ATS) and is structured to support a complete RWA workflow: issuance, encumbrance creation, automated rejection of over-pledging, claim release, and historical auditability.
+Built for the ETHGlobal Hedera bounty "Tokenization of Anything" on **Hedera Asset Tokenization Studio (ATS)**.
 
-## Why Hypotheca exists
+## How it works
 
-The core problem in tokenized finance is not ownership alone — it is enforceable collateral state. A token may be owned by one entity while also being silently pledged to multiple counterparties. Without a shared, queryable, and enforceable source of truth, double-pledging becomes a systemic risk.
+The core primitive is an **EncumbranceLedger** contract that acts as the on-chain *vault* (token holder) for each platform asset:
 
-Hypotheca solves this by making available balance a first-class on-chain fact:
-
-- total balance of an asset
-- total active encumbrances
-- available balance available for new claims
-- rejection of any request that exceeds residual capacity
-
-This creates a clean enforcement layer for use cases such as repo financing, securities lending, trade finance, and collateral management.
-
-## Product vision
-
-Hypotheca provides:
-
-- claim lifecycle tracking for tokenized collateral
-- rejection of over-pledging at the contract level
-- explicit encumbrance state across obligors and claimants
-- transparent audit history for lenders, issuers, and regulators
-- a real-time dashboard for issuance and collateral status monitoring
+1. The asset's balance is deposited into the vault.
+2. A bank (creditor) draws a credit line via `requestLoan(platformId, creditor, units)`.
+3. Each draw **materializes as an ATS hold locked inside the vault** (`createHoldByPartition`, escrow = the ledger). Because ATS holds deduct from the vault's `balanceOf`, the free (encumberable) amount is simply the vault's token balance — one unit can never back two claims.
+4. `requestLoan` also enforces a **coverage gate**: collateral USD / outstanding USD (live Chainlink price) must stay above the platform threshold, with interest (bps) marked up into the drawn unit.
+5. `repay` releases the hold back into the vault (`releaseHoldByPartition` — no identity check, exact "release-back" semantics).
+6. `settle` is permissionless: if coverage drops below threshold (`CoverageBelowThreshold`) or the platform matures with open positions, every hold is **executed to its creditor** on-chain.
+7. `withdraw` moves free units back to a depositor via a **create-then-execute transient hold** (the only whitelisted ATS transfer primitives on the deployed diamonds).
 
 ## Repository structure
 
 ```text
 HYPOTECHA/
 ├── apps/
-│   ├── api/                 # Express API layer for orchestration and integration
-│   └── web/                # React + Vite landing page and dashboard
+│   └── web/                  # React + Vite + wagmi/viem dashboard (reads + writes to the ledger)
 ├── packages/
-│   ├── contracts/          # Solidity + Hardhat smart contract package
-│   └── sdk/                # TypeScript SDK for contract interaction
-├── services/
-│   └── indexer/            # Mirror Node / event indexing service scaffold
-├── scripts/                # deployment and verification utilities
-├── test/                   # integration and E2E test plans
-├── .env.example            # environment variables template
-├── .gitignore
-├── package.json            # workspaces and root commands
-├── README.md
-└── LICENSE                 # if added later
+│   ├── contracts/            # Solidity + Hardhat
+│   │   ├── contracts/        # EncumbranceLedger.sol, RegistryAnchor.sol
+│   │   ├── scripts/          # deploy-ledger, e2e-ledger, verify-ledger, spikes (M0)
+│   │   └── test/             # 29 passing unit tests (ledger + anchor)
+│   └── deployments/          # testnet.json (live addresses, chain 296)
+├── docs/
+│   ├── AUDIT.md              # Full bug & error audit (0 open High/Medium)
+│   └── ...
+├── .env.example
+├── package.json              # workspaces + root scripts (incl. `npm run audit`)
+└── README.md
 ```
 
-## System architecture
+No backend and no SDK — the frontend talks to the contracts **directly** via viem through any EVM wallet (Hedera Flow/COPE, MetaMask, Brave, ...). Event history is read from the mirror node (HashIO `eth_getLogs` is unsupported).
 
-```text
-User / Issuer / Lender
-        │
-        ▼
-React frontend (apps/web)
-        │
-        ▼
-API layer (apps/api)
-        │
-        ▼
-Hypotheca SDK (packages/sdk)
-        │
-        ▼
-Hypotheca contract layer (packages/contracts)
-        │
-        ├── ATS token base / identity layer
-        ├── claim registry / available balance guard
-        └── event and audit trail
-```
+## Deployed on Hedera testnet (chain 296)
 
-### Core contract concepts
+See `packages/deployments/testnet.json`:
 
-- `createClaim(...)`: records a claim against an obligor's available balance
-- `releaseClaim(...)`: releases a claim and restores available balance
-- `defaultClaim(...)`: marks a claim as defaulted by authorized admin flow
-- `getAvailableBalance(...)`: returns the remaining unencumbered amount
-- `getClaims(...)`: returns active claim history for a token / obligor pair
+| Contract | Address |
+|---|---|
+| EncumbranceLedger | `0xfa01E5b4F2765F33790e8d89A8620bdFd3a16958` |
+| RegistryAnchor | `0x12E99d5F169eB3b34aabFb2936619febe7da0754` |
+| SUKUK token (ATS diamond) | `0xb493ff39779e56a66350daa1c1cc9daaed913c3b` |
+| USDC/USD Chainlink feed | `0xb632a7e7e02d76c0Ce99d9C62c7a2d1B5F92B6B5` |
 
-## Current implementation status
-
-The repository currently contains a working frontend prototype and the foundational monorepo scaffolding for the full production stack.
-
-Status by layer:
-
-- Frontend dashboard: implemented and buildable
-- API scaffold: implemented
-- Smart contract scaffold: implemented
-- SDK scaffold: implemented
-- Indexer scaffold: implemented
-- Production integration with live Hedera testnet: in progress
-- Final contract logic and deployment flow: pending production hardening
-
-## Prerequisites
-
-Before running the project locally, ensure the following are installed:
-
-- Node.js 20+
-- npm 10+
-- Git
-- Optional: Hardhat-compatible local tooling for contract work
+Configured platform `0x…73756b756b` ("sukuk"): threshold 10,000 bps, interest 200 bps (2%), borrow cap 1,000,000, maturity 0 → 180-day hold grace.
 
 ## Local setup
 
-1. Clone the repository
-
-```bash
-git clone https://github.com/RustyRustacle/HYPOTECHA.git
-cd HYPOTECHA
-```
-
-2. Install dependencies
-
 ```bash
 npm install
+cp .env.example .env   # fill PRIVATE_KEY / EVM_ADDRESS (contract scripts only)
 ```
 
-3. Copy the environment template
+## Run
 
 ```bash
-cp .env.example .env
+npm run dev:web        # frontend (http://localhost:5173)
 ```
 
-Then fill in the required values, especially:
+Pick **Launch App** → connect an EVM wallet (gate) → Dashboard, Asset, Pledge, Claims, History all read the live ledger. Pledges/releases are broadcast as real transactions signed by your wallet.
 
-```env
-HEDERA_TESTNET_RPC_URL=https://testnet.hashio.io/api
-PRIVATE_KEY=your_private_key_here
-ACCOUNT_ID=0.0.1234567
-PORT=4000
-NODE_ENV=development
-```
-
-## Run the project
-
-### Frontend
+## Contract work
 
 ```bash
-npm run dev:web
+npm run build:contracts   # hardhat compile
+npm run test:contracts    # hardhat test (29 unit tests)
+npm run deploy:testnet    # deploy-ledger.ts
 ```
 
-### API
+Key scripts: `packages/contracts/scripts/deploy-ledger.ts` (deploy + anchor references), `e2e-ledger.ts` (live testnet end-to-end, explicit `gasLimit=800_000n`, no gas-price override).
+
+## Audit
 
 ```bash
-npm run dev:api
+npm run audit
 ```
 
-### Contract build and tests
+Runs contract tests + contract typecheck + web lint + web build. Full findings in [`docs/AUDIT.md`](docs/AUDIT.md) — **0 open High/Medium/Low**.
 
-```bash
-npm run build:contracts
-npm run test:contracts
-```
+## Why the vault model (vs. an off-chain registry)
 
-### Indexer
+- **Enforcement is on-chain** — over-pledging reverts in the contract (`InsufficientCollateral`), not in an API.
+- **Truth is the token** — available = vault `balanceOf`; combined with ATS holds there is no double-count.
+- **Creditors recover real collateral** — `settle` executes holds into each bank's address; the whole thing is verified on HashScan.
+- **No KYC gate on mint/pledge** — identity matters only at settlement/withdrawal execution, where ATS gates the *recipient* (`onlyIdentifiedAddresses`).
 
-```bash
-npm run dev:indexer
-```
-
-## Workspace scripts
-
-The root `package.json` includes the main commands:
-
-```bash
-npm run dev:web
-npm run dev:api
-npm run dev:indexer
-npm run build:web
-npm run build:contracts
-npm run test:contracts
-npm run deploy:testnet
-```
-
-## Development principles
-
-This project follows a simple engineering approach:
-
-- keep the contract logic explicit and auditable
-- separate protocol logic from UI concerns
-- make interface contracts stable before wallet integration
-- prioritize event traceability and claim lifecycle correctness over cosmetic polish
-- keep local app builds portable across environments via `.env`-driven setup
-
-## Roadmap
-
-### Phase 1: Foundations
-- finalize contract states and lifecycle rules
-- complete SDK integration contracts
-- finalize API schema and validation
-
-### Phase 2: Live network integration
-- deploy on Hedera testnet
-- verify contracts on HashScan
-- connect UI to real contract calls
-
-### Phase 3: Trust and auditability
-- add claim history indexing and event queries
-- verify reject-over-pledge flows in production-like conditions
-- add admin/release/default handling and validation
-
-### Phase 4: Demo and submission
-- create 5-minute demo flow
-- finalize dashboard UX and data storytelling
-- produce submission-grade documentation and video walkthrough
-
-## Security and correctness notes
-
-This is still an evolving implementation. The current repository is best treated as a structured engineering scaffold for a production-grade collateral enforcement protocol. The eventual contract layer should be reviewed for:
-
-- access control
-- claim validation edge cases
-- balance consistency across token and claim state
-- default/release semantics
-- event-driven data integrity for dashboard consumption
-
-## Contributing
-
-Contributions are welcome as long as they preserve the protocol's correctness and product scope. Before merging any substantive change:
-
-- validate the contract package
-- validate the SDK and API build
-- confirm frontend compatibility
-- document changes that affect the contract or workflow semantics
-
-## License
-
-Repository code is currently under active development. License terms should be finalized before public release or external production deployment.
-
-## Summary
-
-Hypotheca is designed to make encumbrance state enforceable, transparent, and verifiable. The current repository is a strong engineering base for the full solution: frontend, API, SDK, contract scaffold, and deployment preparation aligned with the Hedera ATS ecosystem.
+Known limitations are documented in `docs/AUDIT.md` (Sourcify auto-verify for chain 296, mirror-node log pagination, single configured platform).
