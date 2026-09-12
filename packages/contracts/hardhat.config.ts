@@ -7,7 +7,7 @@ dotenv.config({ path: resolve(__dirname, '../../.env') });
 
 const config: HardhatUserConfig = {
   solidity: {
-    compilers: [{ version: '0.8.24', settings: { optimizer: { enabled: true, runs: 200 } } }]
+    compilers: [{ version: '0.8.24', settings: { optimizer: { enabled: true, runs: 200 }, viaIR: true } }]
   },
   networks: {
     hederaTestnet: {
