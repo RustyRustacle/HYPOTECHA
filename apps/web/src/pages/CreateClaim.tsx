@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ChevronDown, BadgePlus, CircleCheckBig, RefreshCw, ArrowRight, Wallet, CircleAlert } from 'lucide-react'
+import { useWalletClient } from 'wagmi'
 import { PageHero } from '@/components/PageHero'
 import { RejectionModal, type RejectionReason } from '@/components/RejectionModal'
 import { LivePreview, type AssetView, type HoldSlice } from '@/components/create-claim/LivePreview'
@@ -23,6 +24,7 @@ interface CreateClaimProps {
 type Status = 'idle' | 'pending' | 'success'
 
 export function CreateClaim({ onNavigate, accountEvm }: CreateClaimProps) {
+  const { data: signer } = useWalletClient()
   const [assets, setAssets] = useState<AssetView[] | null>(null)
   const [assetsError, setAssetsError] = useState<string | null>(null)
   const [selectedAsset, setSelectedAsset] = useState<AssetView | null>(null)
@@ -39,6 +41,7 @@ export function CreateClaim({ onNavigate, accountEvm }: CreateClaimProps) {
   const [liveAvailable, setLiveAvailable] = useState(0)
   const [liveHeld, setLiveHeld] = useState(0)
   const [liveTotal, setLiveTotal] = useState(0)
+  const [liveUnit, setLiveUnit] = useState(1)
   const [liveSlices, setLiveSlices] = useState<HoldSlice[]>([])
   const [liveLoading, setLiveLoading] = useState(false)
   const [liveReal, setLiveReal] = useState(false)
@@ -90,14 +93,16 @@ export function CreateClaim({ onNavigate, accountEvm }: CreateClaimProps) {
           fetchClaims(asset.id),
         ])
         const d = 10 ** asset.decimals
-        setLiveTotal(Number(balance.totalBalance) / d)
-        setLiveHeld(Number(balance.totalHeld) / d)
-        setLiveAvailable(Number(balance.availableBalance) / d)
+        const unit = Number(balance.unitUsd18) / 1e18 || 1
+        setLiveUnit(unit)
+        setLiveTotal((Number(balance.totalBalance) / d) * unit)
+        setLiveHeld((Number(balance.totalHeld) / d) * unit)
+        setLiveAvailable((Number(balance.availableBalance) / d) * unit)
         setLiveSlices(
           claims.map((c) => ({
             claimId: c.holdId,
             claimant: c.claimant,
-            amount: Number(c.amount) / d,
+            amount: (Number(c.amount) / d) * unit,
           }))
         )
         setLiveReal(true)
@@ -121,12 +126,12 @@ export function CreateClaim({ onNavigate, accountEvm }: CreateClaimProps) {
   const amountNum = parseFloat(amount) || 0
   const hasBasics = Boolean(claimantAddress.trim()) && Boolean(claimantName.trim())
   const canSubmit = amountNum > 0 && hasBasics && status !== 'pending'
-  const overPledge = liveReal && amountNum > liveAvailable
+  const overPledge = liveReal && amountNum * liveUnit > liveAvailable
   const decimals = selectedAsset?.decimals ?? 0
   const divider = 10 ** decimals
 
-  const projectedHeld = liveHeld + (overPledge ? 0 : amountNum)
-  const projectedAvailable = Math.max(0, liveAvailable - (overPledge ? 0 : amountNum))
+  const projectedHeld = liveHeld + (overPledge ? 0 : amountNum * liveUnit)
+  const projectedAvailable = Math.max(0, liveAvailable - (overPledge ? 0 : amountNum * liveUnit))
 
   const handleSubmit = async () => {
     if (!canSubmit || !selectedAsset) return
@@ -140,7 +145,7 @@ export function CreateClaim({ onNavigate, accountEvm }: CreateClaimProps) {
         amount: toTokenUnits(amountNum, decimals),
       }
       if (!base.holder) delete base.holder
-      const res = await createEncumbrance(base)
+      const res = await createEncumbrance(base, signer)
       if (res.ok) {
         setStatus('success')
         setCreatedClaim(res.claim)
@@ -197,7 +202,7 @@ export function CreateClaim({ onNavigate, accountEvm }: CreateClaimProps) {
                 <div>
                   <h2 className="text-lg font-bold text-text">Register Encumbrance</h2>
                   <p className="text-xs text-text-muted">
-                    {liveReal ? 'LIVE · verified against the shared HCS registry' : 'simulated preview'}
+                    {liveReal ? 'LIVE · vault state from the on-chain ledger' : 'simulated preview'}
                   </p>
                 </div>
               </div>
@@ -206,8 +211,8 @@ export function CreateClaim({ onNavigate, accountEvm }: CreateClaimProps) {
                 <div className="rounded-xl bg-warning/10 border border-warning/30 p-3 flex items-start gap-2.5">
                   <CircleAlert className="w-4 h-4 text-warning shrink-0 mt-0.5" />
                   <p className="text-xs text-text-secondary leading-relaxed">
-                    Registry API unreachable — showing a visual preview. Start the API + registry services
-                    to run the real on-chain guard. <span className="font-mono text-warning/80">{assetsError}</span>
+                    EncumbranceLedger unreachable — showing a visual preview. Check the RPC and that
+                    a platform is configured on the vault. <span className="font-mono text-warning/80">{assetsError}</span>
                   </p>
                 </div>
               )}
@@ -331,7 +336,7 @@ export function CreateClaim({ onNavigate, accountEvm }: CreateClaimProps) {
                   </label>
                   {amountNum > 0 && !overPledge && liveTotal > 0 && (
                     <span className="text-[11px] font-mono text-primary/80">
-                      {formatCurrency(amountNum)} · ~{((amountNum / liveTotal) * 100).toFixed(1)}% of asset
+                      {formatCurrency(amountNum * liveUnit)} · ~{((amountNum * liveUnit) / liveTotal) * 100 > 0 ? ((amountNum * liveUnit) / liveTotal) * 100 : 0}% of asset
                     </span>
                   )}
                 </div>
@@ -381,7 +386,7 @@ export function CreateClaim({ onNavigate, accountEvm }: CreateClaimProps) {
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-text">Encumbrance registered on the shared ledger</div>
                     <div className="text-xs text-text-muted mt-1 leading-relaxed">
-                      <span className="font-mono text-primary">{formatCurrency(amountNum)}</span> pledged to{' '}
+                      <span className="font-mono text-primary">{formatCurrency(amountNum * liveUnit)}</span> pledged to{' '}
                       <span className="text-text-secondary">{claimantName}</span> on {selectedAsset?.symbol}
                       {' via the on-chain registry.'} Available now{' '}
                       <span className="font-mono">{formatCurrency(projectedAvailable)}</span>.
@@ -443,7 +448,7 @@ export function CreateClaim({ onNavigate, accountEvm }: CreateClaimProps) {
             selectedAsset={selectedAsset}
             activeSlices={activeSlices}
             liveTotal={liveTotal}
-            amountNum={amountNum}
+            amountNum={amountNum * liveUnit}
             overPledge={overPledge}
             projectedHeld={projectedHeld}
             projectedAvailable={projectedAvailable}
@@ -454,16 +459,16 @@ export function CreateClaim({ onNavigate, accountEvm }: CreateClaimProps) {
       <RejectionModal
         isOpen={showRejection}
         reason={rejectionReason}
-        requestedAmount={amountNum}
-        availableAmount={rejection?.available ? Number(rejection.available) / divider : liveAvailable}
-        shortfallAmount={rejection?.shortfall ? Number(rejection.shortfall) / divider : Math.max(0, amountNum - liveAvailable)}
+        requestedAmount={amountNum * liveUnit}
+        availableAmount={rejection?.available ? (Number(rejection.available) / divider) * liveUnit : liveAvailable}
+        shortfallAmount={rejection?.shortfall ? (Number(rejection.shortfall) / divider) * liveUnit : Math.max(0, amountNum * liveUnit - liveAvailable)}
         heldOnInstance={liveHeld}
         originPlatform={selectedAsset?.symbol ?? 'the asset'}
         conflictedPlatform="the shared registry"
         conflictCode={rejection?.code}
         existingHoldId={rejection?.conflict?.existingHoldId}
         existingClaimant={rejection?.conflict?.existingClaimant}
-        existingAmount={rejection?.conflict?.existingAmount ? Number(rejection.conflict.existingAmount) / divider : undefined}
+        existingAmount={rejection?.conflict?.existingAmount ? (Number(rejection.conflict.existingAmount) / divider) * liveUnit : undefined}
         onClose={() => setShowRejection(false)}
         onRetry={() => {
           setShowRejection(false)

@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { LockKeyhole, ClipboardList, Coins, Network, BadgePlus, ArrowRight, CircleAlert } from 'lucide-react'
+import { useWalletClient } from 'wagmi'
 import { KPICard } from '@/components/KPICard'
 import { EncumbranceBar } from '@/components/EncumbranceBar'
 import { ClaimsTable } from '@/components/ClaimsTable'
 import { EventLog } from '@/components/EventLog'
 import { PageHero } from '@/components/PageHero'
 import { PlatformLanes } from '@/components/PlatformLanes'
+import { ChainlinkTicker } from '@/components/ChainlinkTicker'
 import {
   buildClaimsMap,
   shapeClaimRows,
@@ -24,6 +26,7 @@ interface DashboardProps {
 }
 
 export function Dashboard({ onNavigate }: DashboardProps) {
+  const { data: signer } = useWalletClient()
   const overview = useOverview()
   const eventsState = useEvents()
   const [bars, setBars] = useState<AssetBarView[]>([])
@@ -46,7 +49,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   const lanes = useMemo(() => shapeLanes(bars), [bars])
 
   const handleRelease = async (row: ClaimRow) => {
-    await releaseEncumbrance(row.key)
+    await releaseEncumbrance(row.key, signer, row.token)
     overview.refresh()
     eventsState.refresh()
   }
@@ -78,11 +81,13 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         />
       </div>
 
+      <ChainlinkTicker />
+
       {overview.error && !ov && (
         <div className="rounded-xl bg-danger/10 border border-danger/30 p-3 flex items-start gap-2.5">
           <CircleAlert className="w-4 h-4 text-danger shrink-0 mt-0.5" />
           <p className="text-xs text-text-secondary leading-relaxed font-mono">
-            Registry API unreachable — {overview.error}
+            Ledger read failed — {overview.error}
           </p>
         </div>
       )}
@@ -125,7 +130,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           icon={Network}
           change={counts ? `${counts.released} released` : 'synced'}
           changeType="positive"
-          subtext="Immutably stored on HCS"
+          subtext="Immutably stored on Hedera"
           delay={240}
         />
       </div>

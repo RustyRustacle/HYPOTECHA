@@ -39,6 +39,7 @@ export interface AssetBarView {
   totalBalance: number
   totalHeld: number
   availableBalance: number
+  unitUsd: number
   claims: BarSlice[]
 }
 
@@ -95,6 +96,7 @@ export function shaperOverviewAssets(overview: ApiOverview, claimsMap: Map<strin
     totalBalance: toNumber(a.balance) + toNumber(a.held),
     totalHeld: toNumber(a.held),
     availableBalance: toNumber(a.available),
+    unitUsd: a.unitUsd18 ? toNumber(a.unitUsd18) / 1e18 : 1,
     claims: claimsMap.get(a.id) ?? [],
   }))
 }
@@ -129,7 +131,12 @@ async function fetchAssetsList() {
 
 export function shapeClaimRows(events: ApiEvent[], operator: string): ClaimRow[] {
   return events
-    .filter((e) => e.status !== 'rejected' && e.status !== 'Rejected')
+    .filter(
+      (e) =>
+        (e.op === 'HOLD_CREATED' || e.op === 'HOLD_RELEASED') &&
+        e.status !== 'rejected' &&
+        e.status !== 'Rejected'
+    )
     .map((e) => ({
       key: e.key,
       tokenName: e.asset?.id ?? e.token,

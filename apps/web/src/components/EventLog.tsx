@@ -11,8 +11,10 @@ interface EventLogProps {
 const eventMeta: Record<EventOp, { glyph: string; text: string }> = {
   HOLD_CREATED: { glyph: '↑', text: 'text-primary-light' },
   HOLD_RELEASED: { glyph: '↓', text: 'text-info-light' },
-  HOLD_EXECUTED: { glyph: '↓', text: 'text-warning-light' },
+  HOLD_EXECUTED: { glyph: '→', text: 'text-warning-light' },
   CONFLICT_REJECTED: { glyph: '✕', text: 'text-danger' },
+  VAULT_DEPOSITED: { glyph: '▲', text: 'text-emerald-300' },
+  VAULT_WITHDRAWN: { glyph: '▼', text: 'text-warning-light' },
 }
 
 function PlatformTag({ id }: { id: string }) {
@@ -50,7 +52,7 @@ export function EventLog({ events, maxHeight = 'max-h-[520px]' }: EventLogProps)
           <span className="w-2.5 h-2.5 rounded-full bg-warning/60" />
           <span className="w-2.5 h-2.5 rounded-full bg-primary/70" />
           <span className="ml-2 text-[10px] uppercase tracking-[0.2em] text-text-muted font-mono">
-            hcs-topic · registry.events
+            encumbrance-ledger · registry.events
           </span>
         </div>
 
@@ -105,7 +107,7 @@ export function EventLog({ events, maxHeight = 'max-h-[520px]' }: EventLogProps)
       <div className="flex items-center justify-center gap-2 mt-3">
         <span className="w-1 h-1 rounded-full bg-primary animate-pulse" />
         <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted">
-          Every record verifiable on Hedera · HCS topic
+          Every record verifiable on Hedera · on-chain ledger
         </span>
       </div>
     </div>

@@ -64,6 +64,13 @@ export default function App() {
     }
   }, [mobileOpen])
 
+  useEffect(() => {
+    if (view === 'landing') {
+      document.body.style.overflow = ''
+      window.scrollTo(0, 0)
+    }
+  }, [view])
+
   const handleLaunchApp = () => setLaunching(true)
   const handleBootDone = () => {
     setLaunching(false)
@@ -73,7 +80,10 @@ export default function App() {
     setGating(false)
     setView('app')
   }
-  const handleBackToLanding = () => setView('landing')
+  const handleBackToLanding = () => {
+    setMobileOpen(false)
+    setView('landing')
+  }
 
   const navigate = (page: string) => {
     setActivePage(page)
@@ -131,7 +141,7 @@ export default function App() {
               />
             </AnimatePresence>
 
-            <Sidebar activePage={activePage} onNavigate={navigate} mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
+            <Sidebar activePage={activePage} onNavigate={navigate} mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} onBackToLanding={handleBackToLanding} />
             <div className="flex-1 flex flex-col overflow-hidden relative z-10">
               <Header
                 onConnectWallet={() => (wallet.connected ? void wallet.disconnect() : void wallet.connect())}

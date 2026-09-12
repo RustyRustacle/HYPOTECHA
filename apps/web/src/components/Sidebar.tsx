@@ -9,6 +9,7 @@ interface SidebarProps {
   onNavigate: (page: string) => void
   mobileOpen?: boolean
   onCloseMobile?: () => void
+  onBackToLanding?: () => void
 }
 
 const navItems: { id: PageId; label: string; icon: ElementType }[] = [
@@ -19,13 +20,14 @@ const navItems: { id: PageId; label: string; icon: ElementType }[] = [
   { id: 'history', label: 'History', icon: ScrollText },
 ]
 
-function SidebarContent({ activePage, onNavigate }: Pick<SidebarProps, 'activePage' | 'onNavigate'>) {
+function SidebarContent({ activePage, onNavigate, onBackToLanding }: Pick<SidebarProps, 'activePage' | 'onNavigate' | 'onBackToLanding'>) {
   return (
     <>
       <div className="px-5 py-5 border-b border-white/[0.06]">
         <button
-          onClick={() => onNavigate('dashboard')}
-          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+          onClick={onBackToLanding}
+          title="Back to Hypotheca landing"
+          className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
         >
           <img
             src="/logo.png"
@@ -90,12 +92,12 @@ function SidebarContent({ activePage, onNavigate }: Pick<SidebarProps, 'activePa
   )
 }
 
-export function Sidebar({ activePage, onNavigate, mobileOpen, onCloseMobile }: SidebarProps) {
+export function Sidebar({ activePage, onNavigate, mobileOpen, onCloseMobile, onBackToLanding }: SidebarProps) {
   return (
     <>
       {/* Desktop */}
       <aside className="hidden lg:flex w-64 flex-col shrink-0 bg-[rgba(9,14,28,0.72)] backdrop-blur-2xl border-r border-white/[0.07] min-h-screen">
-        <SidebarContent activePage={activePage} onNavigate={onNavigate} />
+        <SidebarContent activePage={activePage} onNavigate={onNavigate} onBackToLanding={onBackToLanding} />
       </aside>
 
       {/* Mobile drawer */}
@@ -116,7 +118,7 @@ export function Sidebar({ activePage, onNavigate, mobileOpen, onCloseMobile }: S
           >
             <X className="w-4 h-4" />
           </button>
-          <SidebarContent activePage={activePage} onNavigate={onNavigate} />
+          <SidebarContent activePage={activePage} onNavigate={onNavigate} onBackToLanding={onBackToLanding} />
         </aside>
       </div>
     </>

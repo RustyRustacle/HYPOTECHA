@@ -9,6 +9,8 @@ const legend = [
   { label: 'HOLD_RELEASED', dot: 'bg-info-light', cls: 'text-info border-info/25 bg-info/10' },
   { label: 'HOLD_EXECUTED', dot: 'bg-warning-light', cls: 'text-warning border-warning-light/25 bg-warning/10' },
   { label: 'CONFLICT_REJECTED', dot: 'bg-danger', cls: 'text-danger border-danger/25 bg-danger/10' },
+  { label: 'VAULT_DEPOSITED', dot: 'bg-emerald-400', cls: 'text-emerald-300 border-emerald-400/25 bg-emerald-400/10' },
+  { label: 'VAULT_WITHDRAWN', dot: 'bg-warning-light', cls: 'text-warning border-warning/25 bg-warning/10' },
 ]
 
 export function History() {
@@ -19,10 +21,10 @@ export function History() {
     <div className="space-y-6">
       <div className="-mt-6">
         <PageHero
-          badge="Audit · HCS Ledger"
+          badge="Audit · On-Chain Ledger"
           title="On-Chain"
           accent="History"
-          subtitle="The immutable audit trail of every hold and registry event, streamed from the shared HCS topic."
+          subtitle="The immutable audit trail of every vault and hold event, emitted by the EncumbranceLedger itself."
           media={{ kind: 'video', src: '/app-bg/history.mp4', opacity: 46 }}
           actions={
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full liquid-glass text-xs">
@@ -52,7 +54,7 @@ export function History() {
             </span>
           ))}
           <span className="ml-auto text-[10px] uppercase tracking-[0.2em] text-text-muted font-mono">
-            source · hcs topic {HCS_TOPIC_ID}
+            source · encumbrance-ledger · hcs {HCS_TOPIC_ID}
           </span>
         </div>
 

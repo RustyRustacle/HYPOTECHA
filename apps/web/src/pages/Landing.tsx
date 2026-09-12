@@ -135,7 +135,11 @@ export function Landing({ onLaunchApp }: LandingProps) {
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm">US</div>
+                    <img
+                      src="/treasury-bond.jpg"
+                      alt="US Treasury Bond"
+                      className="w-12 h-12 rounded-xl object-cover border border-primary/25 shadow-lg shadow-black/40"
+                    />
                     <div className="text-left">
                       <div className="text-sm font-semibold text-text">US Treasury Bond #123</div>
                       <div className="text-xs font-mono text-text-muted">UST-123 · $1,000,000</div>

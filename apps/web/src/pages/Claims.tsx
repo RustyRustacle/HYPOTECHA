@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { ClipboardList, CircleAlert } from 'lucide-react'
+import { useWalletClient } from 'wagmi'
 import { ClaimsTable } from '@/components/ClaimsTable'
 import { PageHero } from '@/components/PageHero'
 import { shapeClaimRows, useEvents, useOverview } from '@/lib/registry'
@@ -7,6 +8,7 @@ import { releaseEncumbrance } from '@/lib/hypotheca'
 import type { ClaimRow } from '@/lib/registry'
 
 export function Claims() {
+  const { data: signer } = useWalletClient()
   const overview = useOverview()
   const eventsState = useEvents()
   const claimRows = useMemo(
@@ -15,7 +17,7 @@ export function Claims() {
   )
 
   const handleRelease = async (row: ClaimRow) => {
-    await releaseEncumbrance(row.key)
+    await releaseEncumbrance(row.key, signer, row.token)
     overview.refresh()
     eventsState.refresh()
   }
